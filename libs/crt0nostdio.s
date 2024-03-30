@@ -1,11 +1,16 @@
-		.export ___stdio_init_vars
-		.export _main
-		.export _exit
-		.export _environ
-		.export ___argv
+	.dp
+
+	.export hireg
+	.export tmp
+	.export zero
+	.export	one
+
+hireg:	.word	0
+tmp:	.word	0
+zero:	.word	0
+one:	.word	1
 
 		.code
-
 start:
 		.word 0x80A8
 		.byte 0x04			; 6809
@@ -25,9 +30,15 @@ start:
 		.code
 
 start2:
-		; we don't clear BSS since the kernel already did
-		jsr ___stdio_init_vars
+		ldd	#0
+		std	@zero
+		ldd	#1
+		std	@one
 
+		; start the stack just below the emulator special area
+		lds	#$FDFF
+
+		; we don't clear BSS since the kernel already did
 		; pass environ, argc and argv to main
 		; pointers and data stuffed above stack by execve()
 		leax 4,s
@@ -37,8 +48,11 @@ start2:
 		puls x			; argc
 		ldy #_exit		; return vector
 		pshs y
-		jmp _main		; go
+		jsr	_main
+		; return and exit
+		stb	$FEFF
 
 		.data
 
+		.export _environ
 _environ:	.word 0
