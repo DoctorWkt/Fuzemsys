@@ -13,4 +13,4 @@ install:
 	rsync -a *.h /opt/fcc/lib/6809/include
 	rsync -a arpa net netinet readline sys \
 		 /opt/fcc/lib/6809/include
-	rsync -a 6809/stdint.h /opt/fcc/lib/6809/include
+	rsync -a 6809/std*.h /opt/fcc/lib/6809/include

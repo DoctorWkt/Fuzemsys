@@ -1,16 +1,16 @@
-CC = m6809-unknown-gcc
-ASM = m6809-unknown-as
-AR = m6809-unknown-ar
+CC = /opt/fcc/bin/fcc -m6809
+ASM = /opt/fcc/bin/as6809
+AR = ar
 PLATFORM = 6809
 export PLATFORM
-CC_OPT = -c -Os -I../include -I../include/6809
+CC_OPT = -c -O
 # for stuff that gives gcc nightmares
 CC_NOOPT = $(CC_OPT)
 ASM_OPT = -o
 # copied in from kernel tree
-KRN_HEADERS = userstructs.h drivewire.h
-KRN_HEADERS_SRC = $(addprefix ../../Kernel/include/,$(KRN_HEADERS))
-KRN_HEADERS_COPY = $(addprefix ../include/sys/,$(KRN_HEADERS))
+#KRN_HEADERS = userstructs.h drivewire.h
+#KRN_HEADERS_SRC = $(addprefix ../../Kernel/include/,$(KRN_HEADERS))
+#KRN_HEADERS_COPY = $(addprefix ../include/sys/,$(KRN_HEADERS))
 SRC_CRT0 = crt0_$(PLATFORM).s crt0nostdio_$(PLATFORM).s
 SRC_CRT0 += crt0_$(PLATFORM)_rel.s crt0nostdio_$(PLATFORM)_rel.s
 OBJ_CRT0 = $(SRC_CRT0:.s=.o)
