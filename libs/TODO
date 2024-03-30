@@ -1,0 +1,131 @@
+Hot problem items
+-----------------
+
+- Longlong in printf (plus other modern bits ?)
+- bits of libbsd
+Make exec* try via shell if ENOEXEC
+
+Missing
+
+terminfo (but have termcap)
+streams (intentional)
+X11 (right)
+
+Errors: define the full range required by SVID
+
+get/set domainname via userspace only
+
+sys/fp.h - not really that relevant but might as well have
+
+ieeefp.h ???	(but SDCC is not full IEEE ??)
+
+sys/ipc.h
+sys/lock.h
+math.h (HUEGVAL)
+sys/msg.h
+
+sys/param.h	(now mostly needs to be via sysconf)
+sys/reg.h	(used for what ? ptrace ? )
+sys/sem.h
+
+setjmp.h	defines for size, sig* version
+
+sys/shm.h
+
+signal.h	sigaction bits need defining plus SA_NOCLDSTOP
+sys/statfs	need to add fakery for it
+
+stdio		P_tmpdir, L_tmpnam
+
+stropts.h 	(streams)
+
+termios.h	Define struct termio as well, need to double check all
+		flags isted are present + chars (eg VSWTCH, VEOL2)
+		Defines for the initial chars (CNUL, CDEL etc)
+		TCWINSZ + a few other oddments
+
+sys/tiuser	streams
+
+API functions
+
+Need
+----
+
+cfree(a,b,c)	-> free(a)
+ecvt()
+fcvt()
+gcvt
+isnand()	'is nan ?'
+sighold
+sigignore
+sigpause
+sigrelse
+sigset
+ftw()
+poll() wrappers
+siglongjmp/sigsetjmp
+
+For Modern Stuff
+----------------
+TCP/IP stuff
+
+
+Commands Required
+-----------------
+cat				Yes
+cd				Yes
+chgrp				Yes
+chmod				Yes
+chown				Yes
+cmp				Yes
+cp				Yes
+cpio				No
+date				Yes
+dd				Yes
+df				Yes
+echo				Yes
+ed				Yes
+ex				SIZE
+expr				Yes
+false				Yes
+find				Yes
+grep				Yes
+id				Yes
+kill				Yes
+line				Yes
+ln				Yes
+logname				Yes
+lp				No
+ls				Yes
+mkdir				Yes
+mv				Yes
+passwd				Yes
+pg				no
+pr				Yes
+pwd				Yes
+rm				Yes
+rmdir				Yes
+sed				Yes
+sh				Yes
+sleep				Yes
+sort				Yes
+stty				Yes
+su				Yes
+tail				Yes
+tar				Yes
+tee				Yes
+test				Yes
+touch				Yes
+tr				Yes
+true				Yes
+tty				Yes
+umask				Yes
+uname				Yes
+uucp		[duh ???]	XXX
+uulog				XXX
+uustart				XXX
+uux				XXX
+vi				Yes
+wait				Yes
+who				Yes
+

@@ -1,0 +1,305 @@
+Initial target API (SYS5.2 equivalent - ish)
+
+CODE: we have code
+FIXME: we have buggy code
+MISSING: needs to be added
+NO: function that may in in SYS 5.2 and similar but we won't implement
+OBSOLETE: function that is obsolete so will not be added
+Z80: optimized code in SDCC we should favour for Z80
+
+This doesn't cover the networking API which is currently rather minimal
+
+TODO: enable core fp in the new compiler
+
+a64l			CODE
+abort			CODE
+abs			CODE
+access			CODE
+acos			CODE
+acosf			CODE
+acosh			CODE
+acoshf			CODE
+advance			NO
+alarm			CODE
+asctime			CODE
+asin			CODE
+asinf			CODE
+asinh			CODE
+asinhf			CODE
+assert			CODE
+atan			CODE
+atanf			CODE
+atan2			CODE
+atan2f			CODE
+atanh			CODE
+atanhf			CODE
+atof			CODE
+atoi			CODE
+atol			CODE
+bsearch			CODE
+calloc			CODE
+ceil			CODE
+ceilf			CODE
+chdir			CODE
+chmod			CODE
+chown			CODE
+clearerr		CODE
+clock			CODE
+close			CODE
+compile			CODE (but not to spec)
+cos			CODE
+cosf			CODE
+cosh			CODE
+coshf			CODE
+creat			CODE
+crypt			CODE (but tea not DES)
+ctermid			CODE
+cuserid			CODE
+drand48			CODE
+dup			CODE
+encrypt			NO (obsolete single DES)
+endgrent		CODE
+endpwent		CODE
+endutent		CODE
+erand48			CODE
+erf			CODE
+erfc			CODE
+execl			CODE
+execle			MISSING
+execlp			CODE
+execv			CODE
+execve			CODE
+execvp			CODE
+exit			CODE
+_exit			CODE
+exp			CODE
+expf			CODE
+fabs			CODE
+fabsf			CODE
+fclose			CODE
+fcntl			CODE
+fdopen			CODE
+feof			CODE
+ferror			CODE
+fflush			CODE
+fgetc			CODE
+fgetgrent		CODE
+fgetpwent		CODE
+fgets			CODE
+fileno			CODE
+floor			CODE
+floorf			CODE
+fmod			CODE
+fmodf			CODE
+fopen			CODE
+fork			CODE
+fprintf			CODE
+fputc			CODE
+fputs			CODE
+fread			CODE
+free			CODE
+freopen			CODE
+frexp			CODE
+frexpf			CODE
+fscanf			CODE
+fseek			CODE
+fstat			CODE
+ftell			CODE
+ftw			MISSING https://opensource.apple.com/source/Libc/Libc-825.26/gen/nftw.c ?
+fwrite			CODE
+gamma			OBSOLETE (added lgamma, tgamma)
+getc			CODE
+getchar			CODE
+getcwd			CODE
+getegid			CODE
+getenv			CODE
+geteuid			CODE
+getgid			CODE
+getgrgid		CODE
+getgrnam		CODE
+getlogin		CODE
+getopt			CODE
+getpass			CODE
+getpgrp			CODE
+getpid			CODE
+getppid			CODE
+getpwent		CODE
+getpwnam		CODE
+getpwuid		CODE
+gets			CODE
+getuid			CODE
+getutline		CODE
+getw			CODE
+gmtime			CODE
+gsignal			OBSOLETE
+hcreate			MISSING
+hdestroy		MISSING
+hsearch			MISSING
+hypot			CODE
+hypotf			CODE
+ioctl			CODE
+isalnum			CODE
+isalpha			CODE
+isascii			CODE
+iscntrl			CODE
+isdigit			CODE
+isgraph			CODE
+islower			CODE
+isprint			CODE
+ispunct			CODE
+isspace			CODE
+isupper			CODE
+isxdigit		CODE
+j0			CODE
+j0f			CODE
+j1			CODE
+j1f			CODE
+jn			CODE
+jnf			CODE
+jrand48			CODE
+kill			CODE
+l64a			CODE
+lcong48			CODE
+ldexp			CODE
+lfind			CODE
+link			CODE
+localtime		CODE
+lockf			NO (flock)
+log			CODE
+logf			CODE
+log10			CODE
+log10f			CODE
+longjmp			CODE
+lrand48			CODE
+lsearch			CODE
+lseek			CODE
+mallinfo		NO
+malloc			CODE
+mallopt			NO
+MARK			NO
+matherr			OBSOLETE
+memccpy			CODE
+memchr			CODE
+memcmp			CODE
+memcpy			CODE
+memset			CODE
+mknod			CODE
+mktemp			OBSOLETE
+modf			CODE
+modff			CODE
+monitor			OBSOLETE ?
+mount			CODE
+mrand48			CODE
+nlist			MISSING		Needs a native object file format
+nrand48			CODE
+open			CODE
+pause			CODE
+pclose			CODE
+perror			CODE
+pipe			CODE
+popen			CODE
+pow			CODE
+printf			CODE (check all fmts included)
+putc			CODE
+putchar			CODE
+putenv			CODE
+putpwent		CODE
+puts			CODE
+pututline		CODE
+putw			CODE
+qsort			CODE
+rand			CODE
+read			CODE
+realloc			CODE
+rewind			CODE
+round			CODE
+roundf			CODE
+scanf			CODE
+seed48			CODE
+setbuf			CODE
+setgid			CODE
+setgrent		CODE
+setjmp			CODE
+setkey			NO (obsolete, single DES)
+setpgrp			CODE
+setuid			CODE
+setutent		CODE
+setvbuf			CODE
+sgetl			CODE
+signal			CODE
+sin			CODE
+sinf			CODE
+sinh			CODE
+sinhf			CODE
+sleep			CODE
+sprintf			CODE
+sputl			CODE
+sqrt			CODE
+srand			CODE
+srand48			CODE
+ssignal			OBSOLETE
+stat			CODE
+step			OBSOLETE ?
+stime			CODE
+strcat			CODE
+strchr			CODE
+strcmp			CODE
+strcpy			CODE
+strcspn			CODE
+strlen			CODE
+strncat			CODE
+strncpy			CODE
+strpbrk			CODE
+strrchr			CODE
+strspn			CODE
+strtod			CODE
+strtok			CODE
+strtol			CODE
+swab			CODE
+sync			CODE
+system			CODE
+tan			CODE
+tanf			CODE
+tanh			CODE
+tanhf			CODE
+tdelete			CODE
+tempnam			OBSOLETE
+tfind			CODE
+time			CODE
+times			CODE
+tmpfile			CODE
+tmpnam			CODE
+toascii			CODE
+tolower			CODE
+_tolower		CODE
+toupper			CODE
+_toupper		CODE
+tsearch			CODE
+ttyname			CODE
+twalk			CODE
+tzset			CODE
+ulimit			OBSOLETE (need to get rlimit into L2 kernel)
+umask			CODE
+umount			CODE
+uname			CODE
+ungetc			CODE
+unlink			CODE
+ustat			OBSOLETE (but need to implement statfs in kernel ?)
+utime			CODE
+utmpname		CODE
+vfprintf		CODE
+vsprintf		CODE
+wait			CODE
+write			CODE
+y0			CODE
+y1			CODE
+yn			CODE
+
+
+Post 5.2 the following routines have been encountered along the way that
+are used by apps
+
+mktime			MISSING
+psignal			MISSING
+strsignal		MISSING
+

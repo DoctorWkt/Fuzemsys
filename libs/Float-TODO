@@ -1,0 +1,7 @@
+exp2()
+exp2f()
+
+Sort out exceptions within this code and the Z80 SDCC intrinsics
+
+Figure out which bits to pull from SDCC for Z80 builds
+
