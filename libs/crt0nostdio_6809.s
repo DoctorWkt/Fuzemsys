@@ -1,30 +1,28 @@
-		.module crt0
+		.export ___stdio_init_vars
+		.export _main
+		.export _exit
+		.export _environ
+		.export ___argv
 
-		.globl ___stdio_init_vars
-		.globl _main
-		.globl _exit
-		.globl _environ
-		.globl ___argv
-
-		.area .header
+		.code
 
 start:
-		.dw 0x80A8
-		.db 0x04			; 6809
-		.db 0x00			; 6309 not needed
-		.db __sectionbase_.header__/256	; page to load at
-		.db 0				; no hints
-		.dw __sectionbase_.data__-__sectionbase_.header__ ; gives us header + all text segments
-		.dw __sectionlen_.data__	; gives us data size info
-		.dw __sectionlen_.bss__		; bss size info
-		.db 16				; entry relative to start
-		.db 0				; no chmem hint
-		.db 0				; no stack hint
-		.db 0				; ZP not used on 6809
+		.word 0x80A8
+		.byte 0x04			; 6809
+		.byte 0x00			; 6309 not needed
+		.byte 0x100			; page to load at XXX FIX
+		.byte 0				; no hints
+		.word 0 			;gives us header + all text segments XXX FIX
+		.word 0				; gives us data size info XXX FIX
+		.word 0				; bss size info XXX FIX
+		.byte 16			; entry relative to start
+		.byte 0				; no chmem hint
+		.byte 0				; no stack hint
+		.byte 0				; ZP not used on 6809
 
 		jmp start2
 
-		.area .text
+		.code
 
 start2:
 		; we don't clear BSS since the kernel already did
@@ -40,6 +38,6 @@ start2:
 		pshs y
 		jmp _main		; go
 
-		.area .data
+		.data
 
-_environ:	.dw 0
+_environ:	.word 0
