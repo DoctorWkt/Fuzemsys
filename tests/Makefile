@@ -1,16 +1,17 @@
 CC = /opt/fcc/bin/fcc -m6809
 CFLAGS = -O -c
-LD = /opt/fcc//bin/ld6809
-CRT0 = /opt/fcc//lib/6809/crt0.o
-LIBS = /opt/fcc//lib/6809//libc.a /opt/fcc//lib/6809/lib6809.a
+LD = /opt/fcc/bin/ld6809
+CRT0 = /opt/fcc/lib/6809/crt0.o
+LIBS = /opt/fcc/lib/6809/libc.a /opt/fcc/lib/6809/lib6809.a
 
-test001: test001.o
-	$(LD) -o test001 $(CRT0) test001.o $(LIBS)
+TESTS = test001
 
-test001.o: test001.c
-	$(CC) -o test001.o $(CFLAGS) test001.c
+%: %.c
+	$(CC) -o $@.o $(CFLAGS) $<
+	-$(LD) -o $@ $(CRT0) $@.o $(LIBS)
+	-rm $@.o
 
-all: test001
+all: $(TESTS)
 
 clean:
-	rm -rf *.o *.s *.rel *.map test001
+	rm -rf *.o *.s *.rel *.map $(TESTS)
