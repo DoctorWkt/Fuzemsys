@@ -39,7 +39,7 @@ start2:
 		lds	#$FDFF
 
 		; we don't clear BSS since the kernel already did
-		; jsr ___stdio_init_vars
+		jsr ___stdio_init_vars
 
 		; pass environ, argc and argv to main
 		; pointers and data stuffed above stack by execve()
