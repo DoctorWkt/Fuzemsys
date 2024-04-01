@@ -15,11 +15,11 @@ start:
 		.word 0x80A8
 		.byte 0x04			; 6809
 		.byte 0x00			; 6309 not needed
-		.byte 0x100			; page to load at XXX FIX
+		.byte >__code			; page to load at
 		.byte 0				; no hints
-		.word 0 			;gives us header + all text segments XXX FIX
-		.word 0				; gives us data size info XXX FIX
-		.word 0				; bss size info XXX FIX
+		.word __code_size 		; text size info
+		.word __data_size		; data size info
+		.word __bss_size		; bss size info
 		.byte 16			; entry relative to start
 		.byte 0				; no chmem hint
 		.byte 0				; no stack hint
@@ -39,7 +39,7 @@ start2:
 		lds	#$FDFF
 
 		; we don't clear BSS since the kernel already did
-		jsr ___stdio_init_vars
+		; jsr ___stdio_init_vars
 
 		; pass environ, argc and argv to main
 		; pointers and data stuffed above stack by execve()

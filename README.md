@@ -19,7 +19,15 @@ this into `/opt/fcc/bin/emu6809`. This will also install the 6809 include files
 and the 6809 library.
 
 After that, change into the `tests` directory and do a `make` to build the
-test executables.
+test executables. Right now this just builds `test001`.
+
+With this built, you can run:
+
+```
+$ emu6809 test001
+```
+
+and you should see "Hello world" written to standard output.
 
 Eventually, there will be a `runtests` script that runs the executables using
 the 6809 emulator and checks that they behave as expected.

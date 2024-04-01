@@ -8,9 +8,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <arpa/inet.h>
 
 #include "d6809.h"
 #include "e6809.h"
+#include "exec.h"
 
 // Now visible globally for syscalls.c
 uint8_t ram[65536];
@@ -93,34 +95,88 @@ void e6809_instruction(unsigned pc)
 	}
 }
 
+extern void set_initial_brk(int addr);
+
+/* FUZIX executable header */
+static struct exec E;
+
+/* Load an executable into memory */
+void load_executable(char *filename) {
+	int fd;
+	int cnt;
+	int loadaddr;
+	int codedata;
+	int bssend;
+
+	/* Open the file */
+	fd = open(filename, O_RDONLY);
+	if (fd == -1) {
+		perror(filename);
+		exit(1);
+	}
+
+	/* Read in a possble FUZIX header */
+	cnt= read(fd, &E, sizeof(E));
+	if (cnt == sizeof(E)) {
+		/* Check the magic number and CPU */
+		if ((ntohs(E.a_magic) == EXEC_MAGIC) && (E.a_cpu == A_6809)) {
+
+			/* Determine the load address. */
+			/* N.B. Add on the entry size so we */
+			/* don't have to lseek back to the start */
+			loadaddr= (E.a_base << 8) + E.a_entry;
+
+			/* Determine the size of code + data */
+			codedata= ntohs(E.a_text) + ntohs(E.a_data);
+
+			/* Determine the first address after the BSS */
+			bssend= (E.a_base << 8) + ntohs(E.a_text) +
+				ntohs(E.a_data) + ntohs(E.a_bss);
+			set_initial_brk(bssend);
+
+			/* Determine the start address */
+			ram[0xFFFE] = loadaddr >> 8;
+			ram[0xFFFF] = loadaddr & 0xff;
+
+			/* Now read in the rest of the file */
+			cnt=read(fd, &ram[loadaddr], codedata);
+
+			/* FIXME: should just be < codedata but */
+			/* wkt is seeing reads a few bytes short */
+			if (cnt < (codedata-10)) {
+				fprintf(stderr,
+			 "emu6809: FUZIX exectuable %s too small.\n", filename);
+				exit(1);
+			}
+			return;
+		}
+	} 
+
+	/* It's not a FUZIX binary, so read it in as a raw file at addr 0 */
+	if (read(fd, ram, 0xFC00) < 10) {
+		fprintf(stderr, "emu6809: executable not FUZIX, too small.\n");
+		perror(filename);
+		exit(1);
+	}
+	/* Set the starting address as 0x100 for a raw file */
+	ram[0xFFFE] = 0x01;
+	ram[0xFFFF] = 0x00;
+	close(fd);
+}
+
 int main(int argc, char *argv[])
 {
-	int fd;
-
-	if (argc == 4 && strcmp(argv[1], "-d") == 0) {
+	if (!strcmp(argv[1], "-d")) {
 		argv++;
 		argc--;
 		log_6809 = 1;
 	}
-	if (argc != 3) {
-		fprintf(stderr, "emu6809: test map.\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: emu6809 [-d] executable.\n");
 		exit(1);
 	}
-	fd = open(argv[1], O_RDONLY);
-	if (fd == -1) {
-		perror(argv[1]);
-		exit(1);
-	}
-	/* 0100-0xFDFF */
-	if (read(fd, ram, 0xFC00) < 10) {
-		fprintf(stderr, "emu6809: bad test.\n");
-		perror(argv[1]);
-		exit(1);
-	}
-	close(fd);
 
-	ram[0xFFFE] = 0x01;
-	ram[0xFFFF] = 0x00;
+	load_executable(argv[1]);
 
 	e6809_reset(log_6809);
 	while (1)

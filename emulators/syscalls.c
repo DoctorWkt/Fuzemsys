@@ -88,6 +88,15 @@ unsigned int uiarg(int off) {
 }
 #endif
 
+// Current brk value;
+static int curbrk=0;
+
+// Set the initial break point. This is usually after
+// the end of the BSS.
+void set_initial_brk(int addr) {
+  curbrk=addr;
+}
+
 
 // Get the syscall to perform and return the return value.
 // If *longresult is 1, the result is 32-bits wide.
