@@ -1,0 +1,37 @@
+#!/bin/sh
+# Run each test and compare
+# against known good output
+
+# Make all the tests
+make > /dev/null 2> /dev/null
+
+# Try to use each input source file
+for i in test*.c
+do
+  # Print the test name
+  b=$(basename $i .c)
+  echo -n $i
+
+  # Run the test, capture the output
+  emu6809 $b > testout
+
+  # Compare this agains the correct output
+  cmp -s "out/$b" testout
+
+  # If different, announce failure
+  # and print out the difference
+  if [ "$?" -eq "1" ]
+  then echo ": failed"
+       diff -c "out/$b" testout
+       echo
+
+  # No failure, so announce success
+  else echo ": OK"
+  fi
+
+  # Remove the test and the output
+  rm -f testout $b
+done
+
+# Clean up
+make clean > /dev/null 2> /dev/null

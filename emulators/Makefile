@@ -1,4 +1,5 @@
-CFLAGS += -O2 -Wall -pedantic -g
+#CFLAGS += -O2 -Wall -pedantic -g
+CFLAGS +=  -Wall -pedantic -g
 
 all: emu6809
 

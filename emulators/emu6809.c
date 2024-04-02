@@ -105,7 +105,6 @@ void load_executable(char *filename) {
 	int fd;
 	int cnt;
 	int loadaddr;
-	int codedata;
 	int bssend;
 
 	/* Open the file */
@@ -126,9 +125,6 @@ void load_executable(char *filename) {
 			/* don't have to lseek back to the start */
 			loadaddr= (E.a_base << 8) + E.a_entry;
 
-			/* Determine the size of code + data */
-			codedata= ntohs(E.a_text) + ntohs(E.a_data);
-
 			/* Determine the first address after the BSS */
 			bssend= (E.a_base << 8) + ntohs(E.a_text) +
 				ntohs(E.a_data) + ntohs(E.a_bss);
@@ -139,15 +135,8 @@ void load_executable(char *filename) {
 			ram[0xFFFF] = loadaddr & 0xff;
 
 			/* Now read in the rest of the file */
-			cnt=read(fd, &ram[loadaddr], codedata);
-
-			/* FIXME: should just be < codedata but */
-			/* wkt is seeing reads a few bytes short */
-			if (cnt < (codedata-10)) {
-				fprintf(stderr,
-			 "emu6809: FUZIX exectuable %s too small.\n", filename);
-				exit(1);
-			}
+			cnt=read(fd, &ram[loadaddr], 0xfff0);
+			close(fd);
 			return;
 		}
 	} 
