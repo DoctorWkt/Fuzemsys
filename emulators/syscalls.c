@@ -144,44 +144,37 @@ int do_syscall(int op, int *longresult) {
 	flags |= (oflags & FO_NOCTTY)  ? O_NOCTTY : 0;
 	flags |= (oflags & FO_CLOEXEC) ? O_CLOEXEC : 0;
 	result= open(path, flags, mode);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 2:		// close
 	fd= uiarg(0);
 	result= close(fd);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 3:		// rename
 	path=    (const char *)get_memptr(uiarg(0));
 	newpath= (const char *)get_memptr(uiarg(2));
 	result= rename(path, newpath);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 5:		// link
 	path=    (const char *)get_memptr(uiarg(0));
 	newpath= (const char *)get_memptr(uiarg(2));
 	result= link(path, newpath);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 6:		// unlink
 	path=    (const char *)get_memptr(uiarg(0));
 	result= unlink(path);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 7:		// read
 	fd= uiarg(0);
 	buf= get_memptr(uiarg(2));
 	cnt= uiarg(4);
 	result= read(fd, buf, cnt);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 8:		// write
 	fd= uiarg(0);
 	buf= get_memptr(uiarg(2));
 	cnt= uiarg(4);
 	result= write(fd, buf, cnt);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 9:		// _lseek
 	fd= uiarg(0);
 	ooff= (int32_t *)get_memptr(uiarg(2));
@@ -199,8 +192,7 @@ int do_syscall(int op, int *longresult) {
     case 10:		// chdir
 	path= (const char *)get_memptr(uiarg(0));
 	result= chdir(path);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 11:		// sync
 	sync();
 	return(0);
@@ -208,53 +200,43 @@ int do_syscall(int op, int *longresult) {
 	path= (const char *)get_memptr(uiarg(0));
 	mode= uiarg(2);
 	result= access(path, mode);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 13:		// chmod
 	path= (const char *)get_memptr(uiarg(0));
 	mode= uiarg(2);
 	result= chmod(path, mode);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 14:		// chown
 	path= (const char *)get_memptr(uiarg(0));
  	owner= uiarg(2);
  	group= uiarg(4);
 	result= chown(path, owner, group);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 17:		// dup
 	fd= uiarg(0);
 	result= dup(fd);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 18:		// getpid
 	result= getpid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 19:		// getppid
 	result= getppid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 20:		// getuid
 	result= getuid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 21:		// umask
 	mode= uiarg(0);
 	result= umask(mode);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 25:		// setuid
 	owner= uiarg(0);
 	result= setuid(owner);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 26:		// setgid
 	group= uiarg(0);
 	result= setgid(group);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 27:		// _time XXX not working as yet
 	ktim= (int64_t *)get_memptr(uiarg(0));
 	tim= time(NULL);
@@ -263,28 +245,25 @@ int do_syscall(int op, int *longresult) {
 	return(0);
     case 41:		// getgid
 	result= getgid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 44:		// geteuid
 	result= geteuid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 45:		// getegid
 	result= getegid();
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 51:		// mkdir
 	path= (const char *)get_memptr(uiarg(0));
 	mode= uiarg(2);
 	result= mkdir(path, mode);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     case 52:		// rmdir
 	path= (const char *)get_memptr(uiarg(0));
 	result= rmdir(path);
-	sres= (int32_t)(result & 0xffff);
-	return(sres);
+	break;
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
   }
-  return(0);
+
+  sres= (int32_t)(result & 0xffff);
+  return(sres);
 }
