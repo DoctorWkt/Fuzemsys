@@ -89,7 +89,121 @@ unsigned int uiarg(int off) {
   // printf("uiarg %d is %d\n", off, val);
   return(val);
 }
+
+// Put 16-bit value in memory at the given location
+void putui(uint16_t addr, uint16_t val) {
+  e6809_write8(addr++, val >> 8);
+  e6809_write8(addr, val & 0xff);
+}
 #endif
+
+//
+// Arguments and the environment. When an executable is loaded,
+// the system sets up the stack as follows:
+//
+//	_________________________________
+//	| (NULL)			| top of memory
+//	|-------------------------------|
+//	|				|
+//	| environment strings		|
+//	|				|
+//	|-------------------------------|
+//	|				|
+//	| argument strings		|
+//	|				|
+//	|-------------------------------|
+//	| envp[envc] (NULL)		| end of environment vector tag, a 0
+//	|-------------------------------|
+//	| envp[envc-1]			| pointer to last environment string
+//	|-------------------------------|
+//	| ...				|
+//	|-------------------------------|
+//	| envp[0]			| pointer to first environment string
+//	|-------------------------------|
+//	| argv[argc] (NULL)		| end of argument vector tag, a 0
+//	|-------------------------------|
+//	| argv[argc-1]			| pointer to last argument string
+//	|-------------------------------|
+//	| ...				|
+//	|-------------------------------|
+//	| argv[0]			| pointer to first argument string
+//	|-------------------------------|
+// sp-> | argc				| number of arguments
+//	---------------------------------
+//
+// Return the new stack pointer value.
+
+
+#define MAX_ARGS	200	// Max cmd-line args per process
+
+int set_arg_env(uint16_t sp, char **argv, char **envp)
+{
+  int i;
+  uint16_t argc, envc;
+  uint16_t argvposn, envpposn;
+  uint16_t posn, len;
+  uint8_t *cptr;
+  uint16_t eposn[MAX_ARGS];
+  uint16_t aposn[MAX_ARGS];
+  						// Determine argc and envc.
+  for (i=0, argc=0; argv[i]!=NULL; i++) argc++;
+  for (i=0, envc=0; envp[i]!=NULL; i++) envc++;
+
+#ifdef DEBUG
+  fprintf(stderr, "In set_arg_env, argc is %d\n", argc);
+  for (i = 0; i < argc; i++)
+    fprintf(stderr, "  argv[%d] is %s\n", i, argv[i]);
+  for (i = 0; i < envc; i++)
+    fprintf(stderr, "  envp[%d] is %s\n", i, envp[i]);
+#endif
+
+  						// Now build the arguments and
+						// pointers on the stack
+  posn = sp - 2;
+  putui(posn, 0);				// Put a NULL on top of stack
+
+  for (i = envc - 1; i != -1; i--) {		// For each env string
+    len = strlen(envp[i]) + 1;			// get its length
+    posn -= len;
+    cptr= get_memptr(posn);
+    memcpy(cptr, envp[i], (size_t) len);	// and copy the string
+    eposn[i] = posn;				// onto the stack
+  }
+
+  for (i = argc - 1; i != -1; i--) {		// For each arg string
+    len = strlen(argv[i]) + 1;			// get its length
+    posn -= len;
+    cptr= get_memptr(posn);
+    memcpy(cptr, argv[i], (size_t) len);	// and copy the string
+    aposn[i] = posn;				// onto the stack
+  }
+
+  posn -= 2;
+  putui(posn, 0);				// Put a NULL at end of env array
+
+  for (i = envc - 1; i != -1; i--) {		// For each envp string
+    posn -= 2; 					// put a ptr to the string on the stack
+    putui(posn, (u_int16_t) eposn[i]);
+  }
+  envpposn= posn;				// Save position of first pointer
+
+  posn -= 2;
+  putui(posn, 0);				// Put a NULL before arg ptrs
+
+  for (i = argc - 1; i != -1; i--) {		// For each arg string
+    posn -= 2;
+    putui(posn, (u_int16_t) aposn[i]);		// put a ptr to the string on the stack
+  }
+  argvposn= posn;				// Save position of first pointer
+
+  posn -= 2;
+  putui(posn, (u_int16_t) envpposn);		// Save ptr to envp list of pointers
+  posn -= 2;
+  putui(posn, (u_int16_t) argvposn);		// Save ptr to argv list of pointers
+  posn -= 2;
+  putui(posn, (u_int16_t) argc);		// Save the count of args
+  return(posn);
+}
 
 // Current brk value;
 static int curbrk=0;

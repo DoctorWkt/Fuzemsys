@@ -10,7 +10,7 @@ extern void e6809_write8(unsigned address, unsigned char data);
 
 extern void e6809_instruction(unsigned address);
 
-void e6809_reset (int trace);
+void e6809_reset (int trace, uint16_t sp);
 unsigned e6809_sstep (unsigned irq_i, unsigned irq_f);
 
 struct reg6809 {

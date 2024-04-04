@@ -12,8 +12,8 @@ do
   b=$(basename $i .c)
   echo -n $i
 
-  # Run the test, capture the output
-  emu6809 $b > testout
+  # Run the test with some arguments, capture the output
+  emu6809 $b -l -foo file1 file2 > testout
 
   # Compare this agains the correct output
   cmp -s "out/$b" testout

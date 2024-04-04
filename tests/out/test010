@@ -1,0 +1,12 @@
+argc is 5 at fd94
+argv is at fd9a fd96
+envp is at fda6 fd98
+argv[0] is test010
+argv[1] is -l
+argv[2] is -foo
+argv[3] is file1
+argv[4] is file2
+envp[0] is PATH=/bin:/usr/bin:.
+envp[1] is HOME=/
+envp[2] is TERM=vt100
+envp[3] is USER=root

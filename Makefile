@@ -10,3 +10,4 @@ install:
 clean:
 	(cd emulators; make clean)
 	(cd libs;      make clean)
+	(cd tests;     make clean)

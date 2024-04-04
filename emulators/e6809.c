@@ -1107,12 +1107,12 @@ static einline void inst_tfr (void)
 
 /* reset the 6809 */
 
-void e6809_reset (int trace)
+void e6809_reset (int trace, uint16_t sp)
 {
 	reg_x = 0;
 	reg_y = 0;
 	reg_u = 0;
-	reg_s = 0;
+	reg_s = sp;
 
 	reg_a = 0;
 	reg_b = 0;

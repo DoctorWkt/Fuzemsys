@@ -19,6 +19,15 @@ uint8_t ram[65536];
 int log_6809 = 0;
 char *mapfile = NULL;
 
+// Default environment variables
+static char *default_envp[] = {
+  "PATH=/bin:/usr/bin:.",
+  "HOME=/",
+  "TERM=vt100",
+  "USER=root",
+  NULL
+};
+
 unsigned char e6809_read8(unsigned addr) {
   return ram[addr];
 }
@@ -151,17 +160,29 @@ void load_executable(char *filename) {
   close(fd);
 }
 
+#ifdef DEBUG
+// Debug code
+void dumpram() {
+  FILE *out= fopen("memory.dump", "wb");
+  fwrite(ram, 0x10000, 1, out);
+  fclose(out);
+}
+#endif
+
 void usage(char *name) {
   fprintf(stderr, "Usage: %s [-d] [-m mapfile] executable <arguments>\n", name);
   exit(1);
 }
 
+int set_arg_env(uint16_t sp, char **argv, char **envp);
+
 int main(int argc, char *argv[]) {
   int opt;
+  uint16_t sp;
 
   if (argc<2) usage(argv[0]);
 
-  while ((opt = getopt(argc, argv, "dm:")) != -1) {
+  while ((opt = getopt(argc, argv, "+dm:")) != -1) {
     switch (opt) {
     case 'd':
       log_6809 = 1;
@@ -176,7 +197,11 @@ int main(int argc, char *argv[]) {
 
   load_executable(argv[optind]);
 
-  e6809_reset(log_6809);
+  // Put the args and envp on the stack.
+  // Start the stack below the emulator special locations.
+  sp= set_arg_env(0xFDFF, &argv[optind], default_envp);
+
+  e6809_reset(log_6809, sp);
   while (1)
     e6809_sstep(0, 0);
   return 0;
