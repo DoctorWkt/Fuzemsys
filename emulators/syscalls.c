@@ -7,7 +7,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <arpa/inet.h>
+#include <endian.h>
+#include <time.h>
 
 // FUZIX defines which could be different from the host system
 
@@ -104,7 +105,7 @@ void set_initial_brk(int addr) {
 // If *longresult is 0, the result is 16-bits wide.
 int do_syscall(int op, int *longresult) {
   int fd;		// File descriptor
-  int mode;		// File mode
+  mode_t mode;		// File mode
   int32_t i32;		// Generic signed 32-bit value
   int oflags, flags;	// File flags: FUZIX and host
   uint8_t *buf;		// Pointer to buffer
@@ -118,6 +119,8 @@ int do_syscall(int op, int *longresult) {
   int whence;		// Lseek whence
   int result;		// Native syscall result
   int32_t sres;		// Emulator signed result
+  time_t tim;		// Time value
+  int64_t *ktim;	// Pointer to FUZIX ktime struct
 
   *longresult=0;	// Assume a 16-bit result
 
@@ -184,11 +187,11 @@ int do_syscall(int op, int *longresult) {
 	ooff= (int32_t *)get_memptr(uiarg(2));
 	whence= uiarg(4);
 	// Convert FUZIX offset to host endian
-	i32= ntohl(*ooff);
+	i32= be32toh(*ooff);
 	off= i32;
 	off= lseek(fd, off, whence);
 	// Convert result back to FUZIX endian
-	*ooff= ntohl((int32_t)(off & 0xffffffff));
+	*ooff= htobe32((int32_t)(off & 0xffffffff));
 	// Return -1 on error, 0 otherwise
 	if (off==-1)
 	  return(-1);
@@ -218,6 +221,56 @@ int do_syscall(int op, int *longresult) {
  	owner= uiarg(2);
  	group= uiarg(4);
 	result= chown(path, owner, group);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 17:		// dup
+	fd= uiarg(0);
+	result= dup(fd);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 18:		// getpid
+	result= getpid();
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 19:		// getppid
+	result= getppid();
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 20:		// getuid
+	result= getuid();
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 21:		// umask
+	mode= uiarg(0);
+	result= umask(mode);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 25:		// setuid
+	owner= uiarg(0);
+	result= setuid(owner);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 26:		// setgid
+	group= uiarg(0);
+	result= setgid(group);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 27:		// _time XXX not working as yet
+	ktim= (int64_t *)get_memptr(uiarg(0));
+	tim= time(NULL);
+	// Convert to FUZIX endian
+	*ktim= htobe64(tim);
+	return(0);
+    case 41:		// getgid
+	result= getgid();
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 44:		// geteuid
+	result= geteuid();
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 45:		// getegid
+	result= getegid();
 	sres= (int32_t)(result & 0xffff);
 	return(sres);
     case 51:		// mkdir
