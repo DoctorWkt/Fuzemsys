@@ -105,6 +105,7 @@ void set_initial_brk(int addr) {
 int do_syscall(int op, int *longresult) {
   int fd;		// File descriptor
   int mode;		// File mode
+  int32_t i32;		// Generic signed 32-bit value
   int oflags, flags;	// File flags: FUZIX and host
   uint8_t *buf;		// Pointer to buffer
   const char *path;	// Pointer to pathname
@@ -183,10 +184,11 @@ int do_syscall(int op, int *longresult) {
 	ooff= (int32_t *)get_memptr(uiarg(2));
 	whence= uiarg(4);
 	// Convert FUZIX offset to host endian
-	off= ntohl(*ooff);
+	i32= ntohl(*ooff);
+	off= i32;
 	off= lseek(fd, off, whence);
 	// Convert result back to FUZIX endian
-	*ooff= ntohl(off);
+	*ooff= ntohl((int32_t)(off & 0xffffffff));
 	// Return -1 on error, 0 otherwise
 	if (off==-1)
 	  return(-1);
