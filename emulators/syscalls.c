@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <endian.h>
 #include <time.h>
+#include <errno.h>
 
 // FUZIX defines which could be different from the host system
 
@@ -123,6 +124,7 @@ int do_syscall(int op, int *longresult) {
   int64_t *ktim;	// Pointer to FUZIX ktime struct
 
   *longresult=0;	// Assume a 16-bit result
+  errno= 0;		// Start with no syscall errors
 
   switch(op) {
     case 0:		// _exit

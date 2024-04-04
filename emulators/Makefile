@@ -3,6 +3,9 @@ CFLAGS +=  -Wall -pedantic -g
 
 all: emu6809
 
+emu6809.o: emu6809.c
+	$(CC) $(CFLAGS) -c emu6809.c
+
 e6809.o: e6809.c e6809.h
 	$(CC) $(CFLAGS) -c e6809.c
 

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "e6809.h"
 
 /* code assumptions:
@@ -2331,7 +2332,9 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 		 * the stack or set any flags.
 		 */
 		result= do_syscall(get_reg_d(), &longresult);
-		set_reg_d(result & 0xffff);
+		// X gets the result, errno in D
+		reg_x= result & 0xffff;
+		set_reg_d(errno);
 		if (longresult) reg_y= (result >> 16) & 0xffff;
         	cycles += 7;
 		break;
