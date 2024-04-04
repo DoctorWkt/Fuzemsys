@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 
 // FUZIX defines which could be different from the host system
@@ -111,6 +112,8 @@ int do_syscall(int op, int *longresult) {
   size_t cnt;		// Count in bytes
   int32_t *ooff;	// Lseek offset: FUZIX and host
   off_t off;
+  uid_t owner;		// Chown owner and group
+  gid_t group;
   int whence;		// Lseek whence
   int result;		// Native syscall result
   int32_t sres;		// Emulator signed result
@@ -146,13 +149,13 @@ int do_syscall(int op, int *longresult) {
 	return(sres);
     case 3:		// rename
 	path=    (const char *)get_memptr(uiarg(0));
-	newpath= (const char *)get_memptr(uiarg(1));
+	newpath= (const char *)get_memptr(uiarg(2));
 	result= rename(path, newpath);
 	sres= (int32_t)(result & 0xffff);
 	return(sres);
     case 5:		// link
 	path=    (const char *)get_memptr(uiarg(0));
-	newpath= (const char *)get_memptr(uiarg(1));
+	newpath= (const char *)get_memptr(uiarg(2));
 	result= link(path, newpath);
 	sres= (int32_t)(result & 0xffff);
 	return(sres);
@@ -176,14 +179,55 @@ int do_syscall(int op, int *longresult) {
 	sres= (int32_t)(result & 0xffff);
 	return(sres);
     case 9:		// _lseek
-  	*longresult=1;	// 32-bit result
 	fd= uiarg(0);
-	ooff= (int32_t *)get_memptr(uiarg(1));
-	whence= uiarg(1);
+	ooff= (int32_t *)get_memptr(uiarg(2));
+	whence= uiarg(4);
 	// Convert FUZIX offset to host endian
 	off= ntohl(*ooff);
 	off= lseek(fd, off, whence);
-	sres= (int32_t)(off & 0xffffffff);
+	// Convert result back to FUZIX endian
+	*ooff= ntohl(off);
+	// Return -1 on error, 0 otherwise
+	if (off==-1)
+	  return(-1);
+	return(0);
+    case 10:		// chdir
+	path= (const char *)get_memptr(uiarg(0));
+	result= chdir(path);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 11:		// sync
+	sync();
+	return(0);
+    case 12:		// access
+	path= (const char *)get_memptr(uiarg(0));
+	mode= uiarg(2);
+	result= access(path, mode);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 13:		// chmod
+	path= (const char *)get_memptr(uiarg(0));
+	mode= uiarg(2);
+	result= chmod(path, mode);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 14:		// chown
+	path= (const char *)get_memptr(uiarg(0));
+ 	owner= uiarg(2);
+ 	group= uiarg(4);
+	result= chown(path, owner, group);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 51:		// mkdir
+	path= (const char *)get_memptr(uiarg(0));
+	mode= uiarg(2);
+	result= mkdir(path, mode);
+	sres= (int32_t)(result & 0xffff);
+	return(sres);
+    case 52:		// rmdir
+	path= (const char *)get_memptr(uiarg(0));
+	result= rmdir(path);
+	sres= (int32_t)(result & 0xffff);
 	return(sres);
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
   }
