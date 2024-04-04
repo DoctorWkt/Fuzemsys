@@ -24,7 +24,7 @@ all: cprintf.o $(TESTS)
 cprintf.o: cprintf.c
 	$(CC) -o $@ $(CFLAGS) $<
 
-%: %.c
+%: %.c cprintf.o
 	$(CC) -o $@.o $(CFLAGS) $<
 	-$(LD) -o $@ $(CRT) $@.o $(LIBS) -m $@.map
 	-rm $@.o
