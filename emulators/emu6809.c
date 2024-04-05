@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 #include <arpa/inet.h>
 
 #include "d6809.h"
@@ -170,15 +172,21 @@ void dumpram() {
 #endif
 
 void usage(char *name) {
-  fprintf(stderr, "Usage: %s [-d] [-m mapfile] executable <arguments>\n", name);
+  fprintf(stderr, "Usage: %s [-d] [-m mapfile] executable <arguments>\n\n", name);
+  fprintf(stderr, "\t-d: send debugging information to stderr\n");
+  fprintf(stderr, "\t-m: load a mapfile with symbol information (unused at present)\n\n");
+  fprintf(stderr, "\tIf the FUZIXROOT environment variable is set,\n");
+  fprintf(stderr, "\tuse that as the executable's root directory.\n");
   exit(1);
 }
 
 int set_arg_env(uint16_t sp, char **argv, char **envp);
+void set_fuzix_root(char *dirname);
 
 int main(int argc, char *argv[]) {
   int opt;
   uint16_t sp;
+  char *fuzixroot;
 
   if (argc<2) usage(argv[0]);
 
@@ -195,11 +203,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Load the executable file
   load_executable(argv[optind]);
 
   // Put the args and envp on the stack.
   // Start the stack below the emulator special locations.
   sp= set_arg_env(0xFDFF, &argv[optind], default_envp);
+
+  // If we have a FUZIXROOT environment variable,
+  // use that as the executable's root directory.
+  fuzixroot= getenv("FUZIXROOT");
+  if (fuzixroot != NULL)
+    set_fuzix_root(fuzixroot);
+  else
+    set_fuzix_root("");
+
 
   e6809_reset(log_6809, sp);
   while (1)

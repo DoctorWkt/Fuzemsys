@@ -10,6 +10,9 @@
 #include <endian.h>
 #include <time.h>
 #include <errno.h>
+#include <errno.h>
+#include <limits.h>
+#include <dirent.h>
 
 // FUZIX defines which could be different from the host system
 
@@ -96,6 +99,52 @@ void putui(uint16_t addr, uint16_t val) {
   e6809_write8(addr, val & 0xff);
 }
 #endif
+
+
+                                /* The following two buffers are used as */
+                                /* part of the translation from virtal */
+                                /* absolute filenames to native ones. We */
+                                /* only have 2 buffers, so if you call */
+                                /* xlate_filename() 3 times, the 1st return */
+                                /* value will be destroyed. */
+static char realfilename[2][2 * PATH_MAX];
+static char *rfn[2];
+static int whichrfn=0;
+
+/* Translate from a filename to one which is possibly rooted in $FUZIXROOT.
+ * Note we return a pointer to one of two buffers. The caller does not
+ * have to free the returned pointer, but successive calls will destroy
+ * calls from >2 calls earlier.
+ */
+char * xlate_filename(char *name)
+{
+    int i=whichrfn;
+
+    if (name == NULL) return (NULL);
+    if (name[0] != '/') return (name);  /* Relative, keep it relative */
+    strcpy(rfn[i], name);               /* Copy name into buffer */
+    whichrfn= 1 - whichrfn;             /* Switch to other buffer next time */
+    return (realfilename[i]);
+}
+
+void set_fuzix_root(char *dirname)
+{
+
+  // Test if the dirname exists if not ""
+  if (strlen(dirname)!=0) {
+    DIR *D= opendir(dirname);
+    if (D==NULL) {
+      fprintf(stderr, "Unable to use FUZIXROOT %s: %s\n",
+	  dirname, strerror(errno));
+      exit(1);
+    }
+    closedir(D);
+  }
+  strcpy(realfilename[0], dirname);      
+  strcpy(realfilename[1], dirname);      
+  rfn[0] = realfilename[0]; rfn[0] += strlen(realfilename[0]);
+  rfn[1] = realfilename[1]; rfn[1] += strlen(realfilename[1]);
+}
 
 //
 // Arguments and the environment. When an executable is loaded,
@@ -244,7 +293,7 @@ int do_syscall(int op, int *longresult) {
     case 0:		// _exit
 	_exit(siarg(0));
     case 1:		// open
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	oflags= uiarg(2);
 	mode= uiarg(4);
 
@@ -266,17 +315,17 @@ int do_syscall(int op, int *longresult) {
 	result= close(fd);
 	break;
     case 3:		// rename
-	path=    (const char *)get_memptr(uiarg(0));
-	newpath= (const char *)get_memptr(uiarg(2));
+	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	newpath= (const char *)xlate_filename((char *)get_memptr(uiarg(2)));
 	result= rename(path, newpath);
 	break;
     case 5:		// link
-	path=    (const char *)get_memptr(uiarg(0));
-	newpath= (const char *)get_memptr(uiarg(2));
+	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	newpath= (const char *)xlate_filename((char *)get_memptr(uiarg(2)));
 	result= link(path, newpath);
 	break;
     case 6:		// unlink
-	path=    (const char *)get_memptr(uiarg(0));
+	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	result= unlink(path);
 	break;
     case 7:		// read
@@ -306,24 +355,24 @@ int do_syscall(int op, int *longresult) {
 	  return(-1);
 	return(0);
     case 10:		// chdir
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	result= chdir(path);
 	break;
     case 11:		// sync
 	sync();
 	return(0);
     case 12:		// access
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	mode= uiarg(2);
 	result= access(path, mode);
 	break;
     case 13:		// chmod
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	mode= uiarg(2);
 	result= chmod(path, mode);
 	break;
     case 14:		// chown
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
  	owner= uiarg(2);
  	group= uiarg(4);
 	result= chown(path, owner, group);
@@ -369,12 +418,12 @@ int do_syscall(int op, int *longresult) {
 	result= getegid();
 	break;
     case 51:		// mkdir
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	mode= uiarg(2);
 	result= mkdir(path, mode);
 	break;
     case 52:		// rmdir
-	path= (const char *)get_memptr(uiarg(0));
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	result= rmdir(path);
 	break;
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
