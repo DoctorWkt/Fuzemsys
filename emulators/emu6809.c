@@ -104,7 +104,7 @@ void e6809_instruction(unsigned pc) {
   }
 }
 
-extern void set_initial_brk(int addr);
+extern void set_initial_brk(uint16_t addr);
 
 /* FUZIX executable header */
 static struct exec E;

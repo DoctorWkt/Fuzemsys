@@ -254,13 +254,14 @@ int set_arg_env(uint16_t sp, char **argv, char **envp)
   return(posn);
 }
 
-// Current brk value;
-static int curbrk=0;
+// Initial and current brk value;
+static uint16_t curbrk=0;
+static uint16_t initbrk=0;
 
-// Set the initial break point. This is usually after
-// the end of the BSS.
-void set_initial_brk(int addr) {
-  curbrk=addr;
+// Set the initial break point. This is usually
+// after the end of the BSS.
+void set_initial_brk(uint16_t addr) {
+  curbrk=initbrk=addr;
 }
 
 
@@ -269,6 +270,9 @@ void set_initial_brk(int addr) {
 // If *longresult is 0, the result is 16-bits wide.
 int do_syscall(int op, int *longresult) {
   int fd;		// File descriptor
+  uint16_t sp;		// Current stack pointer
+  uint16_t brkval;	// New brk value
+  uint16_t oldbrkval;	// Old brk value
   mode_t mode;		// File mode
   int32_t i32;		// Generic signed 32-bit value
   int oflags, flags;	// File flags: FUZIX and host
@@ -408,6 +412,34 @@ int do_syscall(int op, int *longresult) {
 	// Convert to FUZIX endian
 	*ktim= htobe64(tim);
 	return(0);
+
+    case 30:		// brk
+	brkval= uiarg(0);
+	sp= get_sp();
+	// If below the initial brk or
+	// in the stack, return an error
+	if ((brkval < initbrk) || (brkval >= sp)) {
+	  errno= ENOMEM;
+	  result= -1;
+	} else {
+	  curbrk= brkval;
+	  result= 0;
+	}
+	break;
+
+    case 31:		// sbrk
+	sp= get_sp();
+	oldbrkval= curbrk;
+	brkval= curbrk + siarg(0);
+	if ((brkval < initbrk) || (brkval >= sp)) {
+	  errno= ENOMEM;
+	  result= -1;
+	} else {
+	  curbrk= brkval;
+	  result= oldbrkval;
+	}
+	break;
+
     case 41:		// getgid
 	result= getgid();
 	break;
