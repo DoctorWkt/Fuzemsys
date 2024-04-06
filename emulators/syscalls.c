@@ -6,13 +6,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <endian.h>
 #include <time.h>
 #include <errno.h>
 #include <errno.h>
 #include <limits.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#define MAX_ARGS	200	// Max cmd-line args per process
 
 // FUZIX defines which could be different from the host system
 
@@ -97,6 +100,11 @@ unsigned int uiarg(int off) {
 void putui(uint16_t addr, uint16_t val) {
   e6809_write8(addr++, val >> 8);
   e6809_write8(addr, val & 0xff);
+}
+
+// Get 16-bit value in memory at the given location
+uint16_t getui(uint16_t addr) {
+  return((e6809_read8(addr) << 8) | e6809_read8(addr+1));
 }
 #endif
 
@@ -183,8 +191,6 @@ void set_fuzix_root(char *dirname)
 // Return the new stack pointer value.
 
 
-#define MAX_ARGS	200	// Max cmd-line args per process
-
 int set_arg_env(uint16_t sp, char **argv, char **envp)
 {
   int i;
@@ -264,15 +270,20 @@ void set_initial_brk(uint16_t addr) {
   curbrk=initbrk=addr;
 }
 
+// We use these to translate the emulated system's
+// argv pointers into pointers into our memory
+char *arglist[MAX_ARGS];
 
 // Get the syscall to perform and return the return value.
 // If *longresult is 1, the result is 32-bits wide.
 // If *longresult is 0, the result is 16-bits wide.
 int do_syscall(int op, int *longresult) {
+  int i;
   int fd;		// File descriptor
   uint16_t sp;		// Current stack pointer
   uint16_t brkval;	// New brk value
   uint16_t oldbrkval;	// Old brk value
+  uint16_t duration;	// Duration of time
   mode_t mode;		// File mode
   int32_t i32;		// Generic signed 32-bit value
   int oflags, flags;	// File flags: FUZIX and host
@@ -289,6 +300,11 @@ int do_syscall(int op, int *longresult) {
   int32_t sres;		// Emulator signed result
   time_t tim;		// Time value
   int64_t *ktim;	// Pointer to FUZIX ktime struct
+  pid_t pid;		// Process id
+  int16_t *iptr;	// Pointer to integer
+  uint16_t addr;	// Address in emulator memory
+  int options;		// Waitpid options
+  int wstatus;		// Waitpid status
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -398,6 +414,17 @@ int do_syscall(int op, int *longresult) {
 	mode= uiarg(0);
 	result= umask(mode);
 	break;
+    case 23:		// execve
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	// Get address of base of arg list
+	addr= uiarg(2);
+	// Get the pointers to the arguments
+	for (i=0; getui(addr)!=0; i++, addr+=2)
+	  arglist[i]= (char *)get_memptr(getui(addr));
+	// NULL terminate the list
+	arglist[i]=NULL;
+	result=execve(path, arglist, NULL);
+	break;
     case 25:		// setuid
 	owner= uiarg(0);
 	result= setuid(owner);
@@ -412,7 +439,6 @@ int do_syscall(int op, int *longresult) {
 	// Convert to FUZIX endian
 	*ktim= htobe64(tim);
 	return(0);
-
     case 30:		// brk
 	brkval= uiarg(0);
 	sp= get_sp();
@@ -426,7 +452,6 @@ int do_syscall(int op, int *longresult) {
 	  result= 0;
 	}
 	break;
-
     case 31:		// sbrk
 	sp= get_sp();
 	oldbrkval= curbrk;
@@ -439,7 +464,19 @@ int do_syscall(int op, int *longresult) {
 	  result= oldbrkval;
 	}
 	break;
-
+    case 32:		// _fork
+	result= fork();
+	break;
+    case 37:		// _pause
+	// If argument is zero, we do a pause().
+	// Otherwise do a sleep in tenths of a second
+	duration= uiarg(0);
+	if (duration)
+	  result= usleep(duration * 1000000);
+	else {
+	  pause();
+	  result=0;
+	}
     case 41:		// getgid
 	result= getgid();
 	break;
@@ -457,6 +494,14 @@ int do_syscall(int op, int *longresult) {
     case 52:		// rmdir
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	result= rmdir(path);
+	break;
+    case 55:		// waitpid
+	pid= uiarg(0);
+	iptr= (int16_t *)get_memptr(uiarg(2));
+	options= uiarg(4);
+	result= waitpid(pid, &wstatus, options);
+	// Put the status into memory
+	*iptr= htobe16((int16_t)wstatus & 0xffff);
 	break;
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
   }

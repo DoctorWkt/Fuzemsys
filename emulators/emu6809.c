@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include <arpa/inet.h>
+#include <endian.h>
 
 #include "d6809.h"
 #include "e6809.h"
@@ -127,7 +127,7 @@ void load_executable(char *filename) {
   cnt = read(fd, &E, sizeof(E));
   if (cnt == sizeof(E)) {
     /* Check the magic number and CPU */
-    if ((ntohs(E.a_magic) == EXEC_MAGIC) && (E.a_cpu == A_6809)) {
+    if ((be16toh(E.a_magic) == EXEC_MAGIC) && (E.a_cpu == A_6809)) {
 
       /* Determine the load address. */
       /* N.B. Add on the entry size so we */
@@ -135,8 +135,8 @@ void load_executable(char *filename) {
       loadaddr = (E.a_base << 8) + E.a_entry;
 
       /* Determine the first address after the BSS */
-      bssend = (E.a_base << 8) + ntohs(E.a_text) +
-	ntohs(E.a_data) + ntohs(E.a_bss);
+      bssend = (E.a_base << 8) + be16toh(E.a_text) +
+	be16toh(E.a_data) + be16toh(E.a_bss);
       set_initial_brk(bssend);
 
       /* Determine the start address */

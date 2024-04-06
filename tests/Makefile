@@ -6,7 +6,7 @@ NOSTDIOCRT0 = /opt/fcc/lib/6809/crt0nostdio.o
 LIBS        = /opt/fcc/lib/6809/libc.a /opt/fcc/lib/6809/lib6809.a
 
 TESTS =  test001 test002 test003 test004 test005 test006 test007 test008
-TESTS += test009 test010 test011 test012
+TESTS += test009 test010 test011 test012 test013 test014 test015
 
 # Some tests use the crt0 which doesn't bring in the stdio library
 test001: CRT= $(NOSTDIOCRT0)
@@ -21,6 +21,9 @@ test009: CRT= $(NOSTDIOCRT0) cprintf.o
 test010: CRT= $(NOSTDIOCRT0) cprintf.o
 test011: CRT= $(NOSTDIOCRT0) cprintf.o
 test012: CRT= $(NOSTDIOCRT0) cprintf.o
+test013: CRT= $(NOSTDIOCRT0) cprintf.o
+test014: CRT= $(NOSTDIOCRT0) cprintf.o
+test015: CRT= $(NOSTDIOCRT0) cprintf.o
 
 all: cprintf.o $(TESTS)
 
