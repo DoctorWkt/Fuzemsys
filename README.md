@@ -18,7 +18,9 @@ Do a `make; make install` here to build at least the 6809 emulator and install
 this into `/opt/fcc/bin/emu6809`. This will also install the 6809 include files
 and the 6809 library.
 
-After that, change into the `tests` directory and do a `make` to build the
+## Tests
+
+With the emulator installed, change into the `tests` directory and do a `make` to build the
 test executables. Now, for example, you can run:
 
 ```
@@ -36,3 +38,8 @@ test001.c: OK
 test002.c: OK
 test003.c: OK
 ```
+
+## Commands
+
+There are some commands in the `cmds/` directory which will run under the emulator.
+At present (April 6 2024) the stdio library isn't working yet.
