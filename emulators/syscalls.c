@@ -28,10 +28,27 @@
 #define FO_NOCTTY        2048
 #define FO_CLOEXEC       4096
 
+// The stat structure used by FUZIX
+struct _uzistat
+{
+        int16_t  st_dev;
+        uint16_t st_ino;
+        uint16_t st_mode;
+        uint16_t st_nlink;
+        uint16_t st_uid;
+        uint16_t st_gid;
+        uint16_t st_rdev;
+        uint32_t st_size;
+        uint32_t st__atime;
+        uint32_t st__mtime;
+        uint32_t st__ctime;
+        uint32_t st_timeh;      /* Time high bytes */
+};
+
 // There are a set of "shim" functions to interface the syscall handler
 // with each emulator. These are:
 // - uint16_t get_sp(void);			// Get stack pointer value
-// - uint8_t *get_memptr(uint16_t addr);	// Get pointer to mem location
+// - uint8_t *get_memptr(uint16_t addr);	// Get ptr to mem location or NULL if addr 0
 // - char scarg(int off);			// Get signed char arg
 // - unsigned char ucarg(int off);		// Get unsigned char arg
 // - int siarg(int off);			// Get signed int arg
@@ -53,8 +70,10 @@ uint16_t get_sp(void) {
 }
 
 // Get a pointer to a location in the emulator's memory
-// given the location's address
+// given the location's address. Return NULL is the
+// emulator's address is zero.
 uint8_t *get_memptr(uint16_t addr) {
+  if (addr==0) return(NULL);
   return(&ram[addr]);
 }
 
@@ -264,15 +283,31 @@ int set_arg_env(uint16_t sp, char **argv, char **envp)
 static uint16_t curbrk=0;
 static uint16_t initbrk=0;
 
+// We use these to translate the emulated system's
+// argv pointers into pointers into our memory
+char *arglist[MAX_ARGS];
+
 // Set the initial break point. This is usually
 // after the end of the BSS.
 void set_initial_brk(uint16_t addr) {
   curbrk=initbrk=addr;
 }
 
-// We use these to translate the emulated system's
-// argv pointers into pointers into our memory
-char *arglist[MAX_ARGS];
+// Copy the host stat information into a _uzistat buffer
+// in the emulator's memory
+void copystat(struct stat *src, struct _uzistat *dst) {
+        dst->st_dev= htobe16(src->st_dev & 0xffff);
+        dst->st_ino= htobe16(src->st_ino & 0xffff);
+        dst->st_mode= htobe16(src->st_mode & 0xffff);
+        dst->st_nlink= htobe16(src->st_nlink & 0xffff);
+        dst->st_uid= htobe16(src->st_uid & 0xffff);
+        dst->st_gid= htobe16(src->st_gid & 0xffff);
+        dst->st_rdev= htobe16(src->st_rdev & 0xffff);
+        dst->st_size= htobe16(src->st_size & 0xffff);
+        dst->st__atime= htobe16(src->st_atime & 0xffff);
+        dst->st__mtime= htobe16(src->st_mtime & 0xffff);
+        dst->st__ctime= htobe16(src->st_ctime & 0xffff);
+}
 
 // Get the syscall to perform and return the return value.
 // If *longresult is 1, the result is 32-bits wide.
@@ -305,6 +340,8 @@ int do_syscall(int op, int *longresult) {
   uint16_t addr;	// Address in emulator memory
   int options;		// Waitpid options
   int wstatus;		// Waitpid status
+  struct stat hstat;	// Host stat struct;
+  struct _uzistat *ustat; // Emulator stat struct;
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -314,6 +351,7 @@ int do_syscall(int op, int *longresult) {
 	_exit(siarg(0));
     case 1:		// open
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	oflags= uiarg(2);
 	mode= uiarg(4);
 
@@ -336,33 +374,41 @@ int do_syscall(int op, int *longresult) {
 	break;
     case 3:		// rename
 	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	newpath= (const char *)xlate_filename((char *)get_memptr(uiarg(2)));
+	if (newpath==NULL) { result=-1; errno=EFAULT; break; }
 	result= rename(path, newpath);
 	break;
     case 5:		// link
 	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	newpath= (const char *)xlate_filename((char *)get_memptr(uiarg(2)));
+	if (newpath==NULL) { result=-1; errno=EFAULT; break; }
 	result= link(path, newpath);
 	break;
     case 6:		// unlink
 	path=    (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	result= unlink(path);
 	break;
     case 7:		// read
 	fd= uiarg(0);
 	buf= get_memptr(uiarg(2));
+	if (buf==NULL) { result=-1; errno=EFAULT; break; }
 	cnt= uiarg(4);
 	result= read(fd, buf, cnt);
 	break;
     case 8:		// write
 	fd= uiarg(0);
 	buf= get_memptr(uiarg(2));
+	if (buf==NULL) { result=-1; errno=EFAULT; break; }
 	cnt= uiarg(4);
 	result= write(fd, buf, cnt);
 	break;
     case 9:		// _lseek
 	fd= uiarg(0);
 	ooff= (int32_t *)get_memptr(uiarg(2));
+	if (ooff==NULL) { result=-1; errno=EFAULT; break; }
 	whence= uiarg(4);
 	// Convert FUZIX offset to host endian
 	i32= be32toh(*ooff);
@@ -376,6 +422,7 @@ int do_syscall(int op, int *longresult) {
 	return(0);
     case 10:		// chdir
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	result= chdir(path);
 	break;
     case 11:		// sync
@@ -383,19 +430,31 @@ int do_syscall(int op, int *longresult) {
 	return(0);
     case 12:		// access
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	mode= uiarg(2);
 	result= access(path, mode);
 	break;
     case 13:		// chmod
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	mode= uiarg(2);
 	result= chmod(path, mode);
 	break;
     case 14:		// chown
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
  	owner= uiarg(2);
  	group= uiarg(4);
 	result= chown(path, owner, group);
+	break;
+    case 15:		// _stat
+	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
+	ustat= (struct _uzistat *)get_memptr(uiarg(2));
+	if (ustat==NULL) { result= -1; errno= EFAULT; break; }
+	result= stat(path, &hstat);
+	if (result==-1) break;
+	copystat(&hstat, ustat);
 	break;
     case 17:		// dup
 	fd= uiarg(0);
@@ -416,6 +475,7 @@ int do_syscall(int op, int *longresult) {
 	break;
     case 23:		// execve
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	// Get address of base of arg list
 	addr= uiarg(2);
 	// Get the pointers to the arguments
@@ -435,6 +495,7 @@ int do_syscall(int op, int *longresult) {
 	break;
     case 27:		// _time XXX not working as yet
 	ktim= (int64_t *)get_memptr(uiarg(0));
+	if (ktim==NULL) { result=-1; errno=EFAULT; break; }
 	tim= time(NULL);
 	// Convert to FUZIX endian
 	*ktim= htobe64(tim);
@@ -488,16 +549,19 @@ int do_syscall(int op, int *longresult) {
 	break;
     case 51:		// mkdir
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	mode= uiarg(2);
 	result= mkdir(path, mode);
 	break;
     case 52:		// rmdir
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	result= rmdir(path);
 	break;
     case 55:		// waitpid
 	pid= uiarg(0);
 	iptr= (int16_t *)get_memptr(uiarg(2));
+	if (iptr==NULL) { result=-1; errno=EFAULT; break; }
 	options= uiarg(4);
 	result= waitpid(pid, &wstatus, options);
 	// Put the status into memory
