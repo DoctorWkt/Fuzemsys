@@ -1,4 +1,7 @@
 // FUZIX syscall handler for the test emulators
+//
+// If you are porting to another emulator, scroll
+// down and read the PORTING guide.
 
 #include <stdio.h>
 #include <stdint.h>
@@ -45,20 +48,37 @@ struct _uzistat
         uint32_t st_timeh;      /* Time high bytes */
 };
 
-// There are a set of "shim" functions to interface the syscall handler
-// with each emulator. These are:
+// PORTING TO ANOTHER EMULATOR
+//
+// First off, make a -D define for your platform, e.g. -DCPU_6809.
+// Then do an #ifdef MYPLATFORM, #define EMU_BIGENDIAN or #define EMU_LITTLEENDIAN, #endif
+// as the code will need to convert from emulator endian <-> host endian.
+//
+// Now, define a set of "shim" functions to interface the syscall handler here with
+// with your emulator. These are:
+//
 // - uint16_t get_sp(void);			// Get stack pointer value
 // - uint8_t *get_memptr(uint16_t addr);	// Get ptr to mem location or NULL if addr 0
 // - char scarg(int off);			// Get signed char arg
 // - unsigned char ucarg(int off);		// Get unsigned char arg
 // - int siarg(int off);			// Get signed int arg
 // - unsigned int uiarg(int off);		// Get unsigned int arg
+// - void putui(uint16_t addr, uint16_t val)	// Put 16-bit value in mem at the given addr
+// - uint16_t getui(uint16_t addr)		// Get 16-bit value in emulator mem at addr
 //
-// Each emulator needs its own shim functions.
+// Finally, add calls to these functions here in your emulator's code:
+//
+// - int do_syscall(int op, int *longresult)	// Do a system call. See comments below
+// - void set_initial_brk(uint16_t addr)	// Set the initial brk value
+// - void set_fuzix_root(char *dirname)		// Set the host directory to be the
+//						// emulated root directory
+// - int set_arg_env()				// Put args on the emulated stack.
+//						// See comments below
 
 #ifdef CPU_6809
 #include "d6809.h"
 #include "e6809.h"
+#define EMU_BIGENDIAN
 
 // Emulator's memory
 extern uint8_t ram[];
@@ -79,9 +99,6 @@ uint8_t *get_memptr(uint16_t addr) {
 
 // Functions to read/write (un)signed char/int/long arguments at the
 // "off"set on the stack. Offset 0 is the 1st byte of the 1st argument.
-// For 6809, we use:
-// extern unsigned char e6809_read8(unsigned address);
-// extern void e6809_write8(unsigned address, unsigned char data);
 
 // Signed 8-bit char argument
 char scarg(int off) {
@@ -91,6 +108,7 @@ char scarg(int off) {
   return(val);
 }
 
+// Unsigned 8-bit char argument
 unsigned char ucarg(int off) {
   uint16_t sp= get_sp() + 2 + off;
   unsigned char val= e6809_read8(sp);
@@ -127,6 +145,20 @@ uint16_t getui(uint16_t addr) {
 }
 #endif
 
+// Determine which endian functions we will use
+#ifdef EMU_BIGENDIAN
+  #define htoemu16 htobe16
+  #define emu16toh be16toh
+  #define htoemu32 htobe32
+  #define emu32toh be32toh
+#endif
+#ifdef EMU_LITTLEENDIAN
+  #define htoemu16 htole16
+  #define emu16toh le16toh
+  #define htoemu32 htole32
+  #define emu32toh le32toh
+#endif
+
 
                                 /* The following two buffers are used as */
                                 /* part of the translation from virtal */
@@ -143,7 +175,7 @@ static int whichrfn=0;
  * have to free the returned pointer, but successive calls will destroy
  * calls from >2 calls earlier.
  */
-char * xlate_filename(char *name)
+char *xlate_filename(char *name)
 {
     int i=whichrfn;
 
@@ -210,6 +242,9 @@ void set_fuzix_root(char *dirname)
 // Return the new stack pointer value.
 
 
+// Build an envp[] and argv[] array below the sp value.
+// Put the arc, argv pointer and envp pointer on the stack.
+// Return the new stack pointer value.
 int set_arg_env(uint16_t sp, char **argv, char **envp)
 {
   int i;
@@ -296,20 +331,21 @@ void set_initial_brk(uint16_t addr) {
 // Copy the host stat information into a _uzistat buffer
 // in the emulator's memory
 void copystat(struct stat *src, struct _uzistat *dst) {
-        dst->st_dev= htobe16(src->st_dev & 0xffff);
-        dst->st_ino= htobe16(src->st_ino & 0xffff);
-        dst->st_mode= htobe16(src->st_mode & 0xffff);
-        dst->st_nlink= htobe16(src->st_nlink & 0xffff);
-        dst->st_uid= htobe16(src->st_uid & 0xffff);
-        dst->st_gid= htobe16(src->st_gid & 0xffff);
-        dst->st_rdev= htobe16(src->st_rdev & 0xffff);
-        dst->st_size= htobe16(src->st_size & 0xffff);
-        dst->st__atime= htobe16(src->st_atime & 0xffff);
-        dst->st__mtime= htobe16(src->st_mtime & 0xffff);
-        dst->st__ctime= htobe16(src->st_ctime & 0xffff);
+        dst->st_dev= htoemu16(src->st_dev & 0xffff);
+        dst->st_ino= htoemu16(src->st_ino & 0xffff);
+        dst->st_mode= htoemu16(src->st_mode & 0xffff);
+        dst->st_nlink= htoemu16(src->st_nlink & 0xffff);
+        dst->st_uid= htoemu16(src->st_uid & 0xffff);
+        dst->st_gid= htoemu16(src->st_gid & 0xffff);
+        dst->st_rdev= htoemu16(src->st_rdev & 0xffff);
+        dst->st_size= htoemu16(src->st_size & 0xffff);
+        dst->st__atime= htoemu16(src->st_atime & 0xffff);
+        dst->st__mtime= htoemu16(src->st_mtime & 0xffff);
+        dst->st__ctime= htoemu16(src->st_ctime & 0xffff);
 }
 
 // Get the syscall to perform and return the return value.
+// Sets the host errno to 0, or non-zero on error.
 // If *longresult is 1, the result is 32-bits wide.
 // If *longresult is 0, the result is 16-bits wide.
 int do_syscall(int op, int *longresult) {
@@ -411,11 +447,11 @@ int do_syscall(int op, int *longresult) {
 	if (ooff==NULL) { result=-1; errno=EFAULT; break; }
 	whence= uiarg(4);
 	// Convert FUZIX offset to host endian
-	i32= be32toh(*ooff);
+	i32= emu32toh(*ooff);
 	off= i32;
 	off= lseek(fd, off, whence);
 	// Convert result back to FUZIX endian
-	*ooff= htobe32((int32_t)(off & 0xffffffff));
+	*ooff= htoemu32((int32_t)(off & 0xffffffff));
 	// Return -1 on error, 0 otherwise
 	if (off==-1)
 	  return(-1);
@@ -565,7 +601,7 @@ int do_syscall(int op, int *longresult) {
 	options= uiarg(4);
 	result= waitpid(pid, &wstatus, options);
 	// Put the status into memory
-	*iptr= htobe16((int16_t)wstatus & 0xffff);
+	*iptr= htoemu16((int16_t)wstatus & 0xffff);
 	break;
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
   }
