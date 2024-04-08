@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <dirent.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -350,7 +351,8 @@ void copystat(struct stat *src, struct _uzistat *dst) {
 // If *longresult is 0, the result is 16-bits wide.
 int do_syscall(int op, int *longresult) {
   int i;
-  int fd;		// File descriptor
+  int fd, newfd;	// File descriptor and new fd
+  int sig;		// Signal
   uint16_t sp;		// Current stack pointer
   uint16_t brkval;	// New brk value
   uint16_t oldbrkval;	// Old brk value
@@ -371,13 +373,14 @@ int do_syscall(int op, int *longresult) {
   int32_t sres;		// Emulator signed result
   time_t tim;		// Time value
   int64_t *ktim;	// Pointer to FUZIX ktime struct
-  pid_t pid;		// Process id
+  pid_t pid, pgid;	// Process id
   int16_t *iptr;	// Pointer to integer
   uint16_t addr;	// Address in emulator memory
   int options;		// Waitpid options
   int wstatus;		// Waitpid status
   struct stat hstat;	// Host stat struct;
   struct _uzistat *ustat; // Emulator stat struct;
+  int pipefd[2];	// Pipe fds
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -492,6 +495,14 @@ int do_syscall(int op, int *longresult) {
 	if (result==-1) break;
 	copystat(&hstat, ustat);
 	break;
+    case 16:		// _fstat
+	fd= uiarg(0);
+	ustat= (struct _uzistat *)get_memptr(uiarg(2));
+	if (ustat==NULL) { result= -1; errno= EFAULT; break; }
+	result= fstat(fd, &hstat);
+	if (result==-1) break;
+	copystat(&hstat, ustat);
+	break;
     case 17:		// dup
 	fd= uiarg(0);
 	result= dup(fd);
@@ -564,6 +575,11 @@ int do_syscall(int op, int *longresult) {
     case 32:		// _fork
 	result= fork();
 	break;
+    case 36:		// dup2
+	fd= uiarg(0);
+	newfd= uiarg(2);
+	result= dup2(fd, newfd);
+	break;
     case 37:		// _pause
 	// If argument is zero, we do a pause().
 	// Otherwise do a sleep in tenths of a second
@@ -574,7 +590,22 @@ int do_syscall(int op, int *longresult) {
 	  pause();
 	  result=0;
 	}
+    case 39:		// kill
+	pid= uiarg(0);
+	sig= uiarg(2);
+	result= kill(pid, sig);
+	break;
+    case 40:		// pipe
+	addr= uiarg(0);
+	if (addr==0) { result=-1; errno=EFAULT; break; }
+	result= pipe(pipefd);
+	if (result==-1) break;
+	putui(addr, pipefd[0] & 0xffff);
+	addr += 2;
+	putui(addr, pipefd[1] & 0xffff);
+	break;
     case 41:		// getgid
+	break;
 	result= getgid();
 	break;
     case 44:		// geteuid
@@ -582,6 +613,16 @@ int do_syscall(int op, int *longresult) {
 	break;
     case 45:		// getegid
 	result= getegid();
+	break;
+    case 48:		// fchdir
+	fd= uiarg(0);
+	result= fchdir(fd);
+	break;
+    case 50:		// fchown
+	fd= uiarg(0);
+ 	owner= uiarg(2);
+ 	group= uiarg(4);
+	result= fchown(fd, owner, group);
 	break;
     case 51:		// mkdir
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
@@ -594,6 +635,9 @@ int do_syscall(int op, int *longresult) {
 	if (path==NULL) { result=-1; errno=EFAULT; break; }
 	result= rmdir(path);
 	break;
+    case 53:		// setpgrp
+	result= setpgrp();
+	break;
     case 55:		// waitpid
 	pid= uiarg(0);
 	iptr= (int16_t *)get_memptr(uiarg(2));
@@ -603,6 +647,27 @@ int do_syscall(int op, int *longresult) {
 	// Put the status into memory
 	*iptr= htoemu16((int16_t)wstatus & 0xffff);
 	break;
+    case 60:		// flock
+	fd= uiarg(0);
+ 	options= uiarg(2);
+	result= flock(fd, options);
+	break;
+    case 61:		// getpgrp
+	result= getpgrp();
+	break;
+    case 77:		// setpgid
+	pid= uiarg(0);
+	pgid= uiarg(2);
+	result= setpgid(pid, pgid);
+	break;
+    case 78:		// setsid
+	result= setsid();
+	break;
+    case 79:		// getsid
+	pid= uiarg(0);
+	result= getsid(pid);
+	break;
+
     default: fprintf(stderr, "Unhandled syscall %d\n", op); exit(1);
   }
 

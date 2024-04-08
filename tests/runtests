@@ -13,7 +13,7 @@ do
   echo -n $i
 
   # Run the test with some arguments, capture the output
-  emu6809 $b -l -foo file1 file2 > testout
+  emu6809 $b -l -foo file1 file2 > testout 2> /dev/null
 
   # Compare this agains the correct output
   cmp -s "out/$b" testout
