@@ -15,6 +15,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <dirent.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -32,6 +34,15 @@
 #define FO_NOCTTY        2048
 #define FO_CLOEXEC       4096
 
+#define FO_TCGETS	1
+#define FO_TCSETSW	3
+#define FO_TIOCFLUSH	6
+#define FO_TIOCHANGUP	7
+#define FO_TIOCOSTOP	8
+#define FO_TIOCOSTART	9
+#define FO_TIOCGWINSZ	10
+#define FO_TIOCGPGRP	12
+
 // The stat structure used by FUZIX
 struct _uzistat
 {
@@ -47,6 +58,20 @@ struct _uzistat
         uint32_t st__mtime;
         uint32_t st__ctime;
         uint32_t st_timeh;      /* Time high bytes */
+};
+
+// FUZIX termios stuff
+typedef uint16_t fotcflag_t;
+typedef uint16_t fospeed_t;
+typedef uint8_t focc_t;
+
+#define FONCCS 12
+struct fotermios {
+  fotcflag_t c_iflag;
+  fotcflag_t c_oflag;
+  fotcflag_t c_cflag;
+  fotcflag_t c_lflag;
+  focc_t c_cc[FONCCS];
 };
 
 // PORTING TO ANOTHER EMULATOR
@@ -381,6 +406,8 @@ int do_syscall(int op, int *longresult) {
   struct stat hstat;	// Host stat struct;
   struct _uzistat *ustat; // Emulator stat struct;
   int pipefd[2];	// Pipe fds
+  struct termios termios;	// Our termios struct
+  struct fotermios *ftios;	// Pointer to FUZIX termios struct
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -547,6 +574,36 @@ int do_syscall(int op, int *longresult) {
 	// Convert to FUZIX endian
 	*ktim= htobe64(tim);
 	return(0);
+// #define FO_TCSETSW	3
+// #define FO_TIOCFLUSH	6
+// #define FO_TIOCOSTOP	8
+// #define FO_TIOCOSTART	9
+// #define FO_TIOCGWINSZ	10
+// #define FO_TIOCGPGRP	12
+    case 29:		// ioctl. Only a few implemented
+	fd= uiarg(0);
+	options= uiarg(2);
+	switch (options) {
+	  case FO_TCGETS:
+	    ftios= (struct fotermios *)get_memptr(uiarg(4));
+	    if (ftios==NULL) { result=-1; errno=EFAULT; break; }
+	    result= tcgetattr(fd, &termios);
+	    if (result== -1) break;
+	    ftios->c_iflag= htoemu16(termios.c_iflag);
+	    ftios->c_oflag= htoemu16(termios.c_oflag);
+	    ftios->c_cflag= htoemu16(termios.c_cflag);
+	    ftios->c_lflag= htoemu16(termios.c_lflag);
+	    for (i=0; i< FONCCS; i++)
+	      ftios->c_cc[i]= termios.c_cc[i];
+	    break;
+	  case FO_TIOCHANGUP:
+	    options= uiarg(4);
+	    fprintf(stderr, "TIOCHANGUP not yet implemented\n");
+	    result= 0;
+	    break;
+	  default: fprintf(stderr, "Unimplemented ioctl %d\n", options); exit(1);
+	}
+	break;
     case 30:		// brk
 	brkval= uiarg(0);
 	sp= get_sp();
