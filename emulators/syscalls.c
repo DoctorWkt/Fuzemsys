@@ -35,7 +35,9 @@
 #define FO_CLOEXEC       4096
 
 #define FO_TCGETS	1
+#define FO_TCSETS	2
 #define FO_TCSETSW	3
+#define FO_TCSETSF	4
 #define FO_TIOCFLUSH	6
 #define FO_TIOCHANGUP	7
 #define FO_TIOCOSTOP	8
@@ -72,6 +74,13 @@ struct fotermios {
   fotcflag_t c_cflag;
   fotcflag_t c_lflag;
   focc_t c_cc[FONCCS];
+};
+
+struct fowinsize {
+    uint16_t ws_row;
+    uint16_t ws_col;
+    uint16_t ws_xpixel;
+    uint16_t ws_ypixel;
 };
 
 // PORTING TO ANOTHER EMULATOR
@@ -177,12 +186,16 @@ uint16_t getui(uint16_t addr) {
   #define emu16toh be16toh
   #define htoemu32 htobe32
   #define emu32toh be32toh
+  #define htoemu64 htobe64
+  #define emu64toh be64toh
 #endif
 #ifdef EMU_LITTLEENDIAN
   #define htoemu16 htole16
   #define emu16toh le16toh
   #define htoemu32 htole32
   #define emu32toh le32toh
+  #define htoemu64 htole64
+  #define emu64toh le64toh
 #endif
 
 
@@ -408,6 +421,8 @@ int do_syscall(int op, int *longresult) {
   int pipefd[2];	// Pipe fds
   struct termios termios;	// Our termios struct
   struct fotermios *ftios;	// Pointer to FUZIX termios struct
+  struct winsize w;	// Host window size
+  struct fowinsize *fw;	// FUZIX window size
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -572,14 +587,8 @@ int do_syscall(int op, int *longresult) {
 	if (ktim==NULL) { result=-1; errno=EFAULT; break; }
 	tim= time(NULL);
 	// Convert to FUZIX endian
-	*ktim= htobe64(tim);
+	*ktim= htoemu64(tim);
 	return(0);
-// #define FO_TCSETSW	3
-// #define FO_TIOCFLUSH	6
-// #define FO_TIOCOSTOP	8
-// #define FO_TIOCOSTART	9
-// #define FO_TIOCGWINSZ	10
-// #define FO_TIOCGPGRP	12
     case 29:		// ioctl. Only a few implemented
 	fd= uiarg(0);
 	options= uiarg(2);
@@ -596,10 +605,48 @@ int do_syscall(int op, int *longresult) {
 	    for (i=0; i< FONCCS; i++)
 	      ftios->c_cc[i]= termios.c_cc[i];
 	    break;
+	  case FO_TCSETS:
+	    ftios= (struct fotermios *)get_memptr(uiarg(4));
+	    if (ftios==NULL) { result=-1; errno=EFAULT; break; }
+	    termios.c_iflag= emu16toh(ftios->c_iflag);
+	    termios.c_oflag= emu16toh(ftios->c_oflag);
+	    termios.c_cflag= emu16toh(ftios->c_cflag);
+	    termios.c_lflag= emu16toh(ftios->c_lflag);
+	    for (i=0; i< FONCCS; i++)
+	      termios.c_cc[i]= ftios->c_cc[i];
+	    result= tcgetattr(fd, &termios);
+	    break;
+	  case FO_TIOCOSTOP:
+	    result= ioctl(fd, TCOOFF);
+	    break;
+	  case FO_TIOCOSTART:
+	    result= ioctl(fd, TCOON);
+	    break;
 	  case FO_TIOCHANGUP:
 	    options= uiarg(4);
 	    fprintf(stderr, "TIOCHANGUP not yet implemented\n");
 	    result= 0;
+	    break;
+	  case FO_TIOCFLUSH:
+	    options= uiarg(4);
+	    result= tcflush(fd, options);
+	    break;
+	  case FO_TCSETSW:
+	    result= tcdrain(fd);
+	    break;
+	  case FO_TCSETSF:
+	    result= tcflush(fd, TCOFLUSH);
+	    break;
+	  case FO_TIOCGPGRP:
+	    result= isatty(fd);
+	    break;
+	  case FO_TIOCGWINSZ:
+	    fw= (struct fowinsize *)get_memptr(uiarg(4));
+	    if (fw==NULL) { result=-1; errno=EFAULT; break; }
+	    result= ioctl(fd, TIOCGWINSZ, &w);
+	    if (result == -1) break;
+    	    fw->ws_row= htoemu16(w.ws_row);
+    	    fw->ws_col= htoemu16(w.ws_col);
 	    break;
 	  default: fprintf(stderr, "Unimplemented ioctl %d\n", options); exit(1);
 	}
