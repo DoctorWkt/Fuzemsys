@@ -654,6 +654,7 @@ int do_syscall(int op, int *longresult) {
     case 30:		// brk
 	brkval= uiarg(0);
 	sp= get_sp();
+	// printf("In brk, request %x, initbrk %x, sp %x\n", brkval, initbrk, sp);
 	// If below the initial brk or
 	// in the stack, return an error
 	if ((brkval < initbrk) || (brkval >= sp)) {
@@ -668,6 +669,7 @@ int do_syscall(int op, int *longresult) {
 	sp= get_sp();
 	oldbrkval= curbrk;
 	brkval= curbrk + siarg(0);
+	// printf("In sbrk, request %x, initbrk %x, sp %x\n", brkval, initbrk, sp);
 	if ((brkval < initbrk) || (brkval >= sp)) {
 	  errno= ENOMEM;
 	  result= -1;
