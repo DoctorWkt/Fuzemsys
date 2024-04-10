@@ -1,0 +1,208 @@
+num is 1 amt 0xdc9
+Allocating 0xdc9 bytes to ptr[1]
+ptr[1] is now 0xbc7
+num is 6 amt 0xa0a
+Allocating 0xa0a bytes to ptr[6]
+ptr[6] is now 0x1997
+num is 7 amt 0x2c8
+Allocating 0x2c8 bytes to ptr[7]
+ptr[7] is now 0x23a7
+num is 6 amt 0x79a
+freeing ptr[6]: 0x1997
+Allocating 0x79a bytes to ptr[6]
+ptr[6] is now 0x1c07
+num is 5 amt 0xb55
+Allocating 0xb55 bytes to ptr[5]
+ptr[5] is now 0x2673
+num is 2 amt 0x151
+Allocating 0x151 bytes to ptr[2]
+ptr[2] is now 0x1aaf
+num is 11 amt 0x8f5
+Allocating 0x8f5 bytes to ptr[11]
+ptr[11] is now 0x31cf
+num is 12 amt 0xa
+Allocating 0xa bytes to ptr[12]
+ptr[12] is now 0x1a9f
+num is 12 amt 0x75a
+freeing ptr[12]: 0x1a9f
+Allocating 0x75a bytes to ptr[12]
+ptr[12] is now 0x3acb
+num is 11 amt 0x147
+freeing ptr[11]: 0x31cf
+Allocating 0x147 bytes to ptr[11]
+ptr[11] is now 0x397f
+num is 8 amt 0x443
+Allocating 0x443 bytes to ptr[8]
+ptr[8] is now 0x3537
+num is 15 amt 0x941
+Allocating 0x941 bytes to ptr[15]
+ptr[15] is now 0x422b
+num is 8 amt 0x1dd
+freeing ptr[8]: 0x3537
+Allocating 0x1dd bytes to ptr[8]
+ptr[8] is now 0x379b
+num is 10 amt 0xf0f
+Allocating 0xf0f bytes to ptr[10]
+ptr[10] is now 0x4b73
+num is 8 amt 0x1ac
+freeing ptr[8]: 0x379b
+Allocating 0x1ac bytes to ptr[8]
+ptr[8] is now 0x37cf
+num is 14 amt 0x9fe
+Allocating 0x9fe bytes to ptr[14]
+ptr[14] is now 0x5a87
+num is 6 amt 0x631
+freeing ptr[6]: 0x1c07
+Allocating 0x631 bytes to ptr[6]
+ptr[6] is now 0x1d6f
+num is 9 amt 0x2e
+Allocating 0x2e bytes to ptr[9]
+ptr[9] is now 0x1d3b
+num is 4 amt 0x74f
+Allocating 0x74f bytes to ptr[4]
+ptr[4] is now 0x648b
+num is 2 amt 0x15e
+freeing ptr[2]: 0x1aaf
+Allocating 0x15e bytes to ptr[2]
+ptr[2] is now 0x1bd7
+num is 14 amt 0x263
+freeing ptr[14]: 0x5a87
+Allocating 0x263 bytes to ptr[14]
+ptr[14] is now 0x6223
+num is 15 amt 0x167
+freeing ptr[15]: 0x422b
+Allocating 0x167 bytes to ptr[15]
+ptr[15] is now 0x4a07
+num is 11 amt 0xec7
+freeing ptr[11]: 0x397f
+Allocating 0xec7 bytes to ptr[11]
+ptr[11] is now 0x6bdf
+num is 11 amt 0xd69
+freeing ptr[11]: 0x6bdf
+Allocating 0xd69 bytes to ptr[11]
+ptr[11] is now 0x6d3b
+num is 9 amt 0xb9a
+freeing ptr[9]: 0x1d3b
+Allocating 0xb9a bytes to ptr[9]
+ptr[9] is now 0x7aab
+num is 10 amt 0x93e
+freeing ptr[10]: 0x4b73
+Allocating 0x93e bytes to ptr[10]
+ptr[10] is now 0x5143
+num is 9 amt 0x8be
+freeing ptr[9]: 0x7aab
+Allocating 0x8be bytes to ptr[9]
+ptr[9] is now 0x7d87
+num is 8 amt 0x42c
+freeing ptr[8]: 0x37cf
+Allocating 0x42c bytes to ptr[8]
+ptr[8] is now 0x4d13
+num is 14 amt 0xbf8
+freeing ptr[14]: 0x6223
+Allocating 0xbf8 bytes to ptr[14]
+ptr[14] is now 0x864b
+num is 14 amt 0x45f
+freeing ptr[14]: 0x864b
+Allocating 0x45f bytes to ptr[14]
+ptr[14] is now 0x8de3
+num is 5 amt 0x88d
+freeing ptr[5]: 0x2673
+Allocating 0x88d bytes to ptr[5]
+ptr[5] is now 0x293b
+num is 1 amt 0x25a
+freeing ptr[1]: 0xbc7
+Allocating 0x25a bytes to ptr[1]
+ptr[1] is now 0x1737
+num is 9 amt 0xc90
+freeing ptr[9]: 0x7d87
+Allocating 0xc90 bytes to ptr[9]
+ptr[9] is now 0x9247
+num is 12 amt 0x3b1
+freeing ptr[12]: 0x3acb
+Allocating 0x3b1 bytes to ptr[12]
+ptr[12] is now 0x3e73
+num is 12 amt 0x682
+freeing ptr[12]: 0x3e73
+Allocating 0x682 bytes to ptr[12]
+ptr[12] is now 0x7fc3
+num is 11 amt 0x27a
+freeing ptr[11]: 0x6d3b
+Allocating 0x27a bytes to ptr[11]
+ptr[11] is now 0x782b
+num is 5 amt 0xbc2
+freeing ptr[5]: 0x293b
+Allocating 0xbc2 bytes to ptr[5]
+ptr[5] is now 0x9edb
+num is 11 amt 0xcd5
+freeing ptr[11]: 0x782b
+Allocating 0xcd5 bytes to ptr[11]
+ptr[11] is now 0xaaa3
+num is 3 amt 0x6e
+Allocating 0x6e bytes to ptr[3]
+ptr[3] is now 0x7a37
+num is 13 amt 0xea9
+Allocating 0xea9 bytes to ptr[13]
+ptr[13] is now 0xb77f
+num is 2 amt 0xdf9
+freeing ptr[2]: 0x1bd7
+Allocating 0xdf9 bytes to ptr[2]
+ptr[2] is now 0xc62f
+num is 10 amt 0x73a
+freeing ptr[10]: 0x5143
+Allocating 0x73a bytes to ptr[10]
+ptr[10] is now 0x5347
+num is 12 amt 0xed6
+freeing ptr[12]: 0x7fc3
+Allocating 0xed6 bytes to ptr[12]
+ptr[12] is now 0xd42f
+num is 2 amt 0xbba
+freeing ptr[2]: 0xc62f
+Allocating 0xbba bytes to ptr[2]
+ptr[2] is now 0xc86f
+num is 3 amt 0x6d4
+freeing ptr[3]: 0x7a37
+Allocating 0x6d4 bytes to ptr[3]
+ptr[3] is now 0x2af7
+num is 0 amt 0x264
+Allocating 0x264 bytes to ptr[0]
+ptr[0] is now 0x14cf
+num is 11 amt 0xf1f
+freeing ptr[11]: 0xaaa3
+Allocating 0xf1f bytes to ptr[11]
+ptr[11] is now 0xe30b
+num is 14 amt 0xb34
+freeing ptr[14]: 0x8de3
+Allocating 0xb34 bytes to ptr[14]
+ptr[14] is now 0xac47
+num is 15 amt 0x2c1
+freeing ptr[15]: 0x4a07
+Allocating 0x2c1 bytes to ptr[15]
+ptr[15] is now 0x1207
+num is 7 amt 0xa41
+freeing ptr[7]: 0x23a7
+Allocating 0xa41 bytes to ptr[7]
+ptr[7] is now 0x6de3
+num is 13 amt 0x134
+freeing ptr[13]: 0xb77f
+Allocating 0x134 bytes to ptr[13]
+ptr[13] is now 0xc4f7
+num is 7 amt 0x907
+freeing ptr[7]: 0x6de3
+Allocating 0x907 bytes to ptr[7]
+ptr[7] is now 0x6f1f
+num is 0 amt 0x875
+freeing ptr[0]: 0x14cf
+Allocating 0x875 bytes to ptr[0]
+ptr[0] is now 0x7dcf
+num is 5 amt 0xb71
+freeing ptr[5]: 0x9edb
+Allocating 0xb71 bytes to ptr[5]
+ptr[5] is now 0x9f2b
+num is 4 amt 0xd0f
+freeing ptr[4]: 0x648b
+Allocating 0xd0f bytes to ptr[4]
+ptr[4] is now 0xb7e3
+num is 14 amt 0xe3d
+freeing ptr[14]: 0xac47
+Allocating 0xe3d bytes to ptr[14]
+ptr[14] is now 0x0

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <errno.h>
 #include <endian.h>
+#include <sys/stat.h>
 
 #include "d6809.h"
 #include "e6809.h"
@@ -115,10 +116,17 @@ void load_executable(char *filename) {
   int cnt;
   int loadaddr;
   int bssend;
+  struct stat S;
 
   /* Open the file */
   fd = open(filename, O_RDONLY);
   if (fd == -1) {
+    perror(filename);
+    exit(1);
+  }
+
+  /* Get the file's size */
+  if (fstat(fd, &S) == -1) {
     perror(filename);
     exit(1);
   }
@@ -135,8 +143,7 @@ void load_executable(char *filename) {
       loadaddr = (E.a_base << 8) + E.a_entry;
 
       /* Determine the first address after the BSS */
-      bssend = (E.a_base << 8) + be16toh(E.a_text) +
-	be16toh(E.a_data) + be16toh(E.a_bss);
+      bssend = S.st_size + loadaddr + 0x80;
       set_initial_brk(bssend);
 // printf("Set initial brk to 0x%x\n", bssend);
 
