@@ -1,15 +1,3 @@
-	.dp
-
-	.export hireg
-	.export tmp
-	.export zero
-	.export	one
-
-hireg:	.word	0
-tmp:	.word	0
-zero:	.word	0
-one:	.word	1
-
 		.code
 start:
 		.word 0x80A8
