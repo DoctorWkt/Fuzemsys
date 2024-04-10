@@ -13,7 +13,7 @@ int main() {
   while (1) {
     num= rand() & 0xf;
     amt= rand() & 0xff;
-    cprintf("num is %d amt %d\n", num, amt);
+    cprintf("num is %d amt 0x%x\n", num, amt);
 
     if (ptr[num] != NULL) {
       cprintf("freeing ptr[%d]\n", num);
@@ -21,9 +21,9 @@ int main() {
       ptr[num]= NULL;
     }
 
-    cprintf("Allocating %d bytes to ptr[%d]\n", amt, num);
+    cprintf("Allocating 0x%x bytes to ptr[%d]\n", amt, num);
     ptr[num]= malloc(amt);
-    cprintf("ptr[%d] is now %x\n", num, ptr[num]);
+    cprintf("ptr[%d] is now 0x%x\n", num, ptr[num]);
   }
   return(0);
 }

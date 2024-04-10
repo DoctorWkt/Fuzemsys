@@ -138,6 +138,7 @@ void load_executable(char *filename) {
       bssend = (E.a_base << 8) + be16toh(E.a_text) +
 	be16toh(E.a_data) + be16toh(E.a_bss);
       set_initial_brk(bssend);
+// printf("Set initial brk to 0x%x\n", bssend);
 
       /* Determine the start address */
       ram[0xFFFE] = loadaddr >> 8;
@@ -202,6 +203,9 @@ int main(int argc, char *argv[]) {
       usage(argv[0]);
     }
   }
+
+  // Clear the memory
+  memset(ram, 0, 0x1000);
 
   // Load the executable file
   load_executable(argv[optind]);
