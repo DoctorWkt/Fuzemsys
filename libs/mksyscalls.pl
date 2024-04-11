@@ -21,6 +21,7 @@ _printchar:
 	stb     \$FEFE
 	rts
 
+	.export __syscall
 __syscall:
 	swi
 	cmpd #0		; D holds error val, X return result
