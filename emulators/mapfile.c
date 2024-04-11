@@ -100,7 +100,7 @@ char *get_symbol_and_offset(unsigned int addr, int *offset) {
     return (maparray[cidx].sym);
   }
 
-  // No luck. Search the whole list to find a syuitable symbol
+  // No luck. Search the whole list to find a suitable symbol
   for (cidx = 0; cidx < mapcnt; cidx++) {
     if ((maparray[cidx].addr <= addr) && (maparray[cidx + 1].addr > addr)) {
       *offset = addr - maparray[cidx].addr;
