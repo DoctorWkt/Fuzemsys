@@ -16,6 +16,8 @@
 #include "d6809.h"
 #include "e6809.h"
 #include "exec.h"
+#include "syscalls.h"
+#include "mapfile.h"
 
 // Now visible globally for syscalls.c
 uint8_t ram[65536];
@@ -93,19 +95,30 @@ static const char *make_flags(uint8_t cc) {
   return buf;
 }
 
+// char *get_symbol_and_offset(unsigned int addr, int *offset);
+
 /* Called each new instruction issue */
 void e6809_instruction(unsigned pc) {
   char buf[80];
+  char *sym=NULL;
+  int offset;
   struct reg6809 *r = e6809_get_regs();
+
   if (log_6809) {
     d6809_disassemble(buf, pc);
-    fprintf(stderr, "%04X: %-16.16s | ", pc, buf);
+    // See if we have a symbol at this address
+    if (mapfile_loaded)
+      sym= get_symbol_and_offset(pc, &offset);
+
+    if (sym!=NULL)
+      fprintf(stderr, "%12s+%04X: %-16.16s | ", sym, offset, buf);
+    else
+      fprintf(stderr, "%04X: %-16.16s | ", pc, buf);
+
     fprintf(stderr, "%s %02X:%02X %04X %04X %04X %04X\n", make_flags(r->cc),
 	    r->a, r->b, r->x, r->y, r->u, r->s);
   }
 }
-
-extern void set_initial_brk(uint16_t addr);
 
 /* FUZIX executable header */
 static struct exec E;
@@ -205,6 +218,7 @@ int main(int argc, char *argv[]) {
       break;
     case 'm':
       mapfile = optarg;
+      read_mapfile(mapfile);
       break;
     default:
       usage(argv[0]);

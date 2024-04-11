@@ -15,8 +15,12 @@ d6809.o: d6809.c d6809.h e6809.h
 syscalls6809.o: syscalls.c
 	$(CC) $(CFLAGS) -DCPU_6809 -c -o syscalls6809.o syscalls.c
 
-emu6809: emu6809.o e6809.o d6809.o syscalls6809.o
-	$(CC) $(CFLAGS) -o emu6809 emu6809.o e6809.o d6809.o syscalls6809.o
+mapfile.o: mapfile.c
+	$(CC) $(CFLAGS) -c mapfile.c
+
+emu6809: emu6809.o e6809.o d6809.o syscalls6809.o mapfile.o
+	$(CC) $(CFLAGS) -o emu6809 emu6809.o e6809.o d6809.o \
+		syscalls6809.o mapfile.o
 
 clean:
 	rm -f *.o *.map

@@ -214,7 +214,7 @@ static int whichrfn=0;
  * have to free the returned pointer, but successive calls will destroy
  * calls from >2 calls earlier.
  */
-char *xlate_filename(char *name)
+static char *xlate_filename(char *name)
 {
     int i=whichrfn;
 
@@ -369,7 +369,7 @@ void set_initial_brk(uint16_t addr) {
 
 // Copy the host stat information into a _uzistat buffer
 // in the emulator's memory
-void copystat(struct stat *src, struct _uzistat *dst) {
+static void copystat(struct stat *src, struct _uzistat *dst) {
         dst->st_dev= htoemu16(src->st_dev & 0xffff);
         dst->st_ino= htoemu16(src->st_ino & 0xffff);
         dst->st_mode= htoemu16(src->st_mode & 0xffff);

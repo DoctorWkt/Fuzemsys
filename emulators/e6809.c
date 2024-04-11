@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "e6809.h"
+#include "syscalls.h"
 
 /* code assumptions:
  *  - it is assumed that an 'int' is at least 16 bits long.
@@ -1124,8 +1125,6 @@ void e6809_reset (int trace, uint16_t sp)
 
 	reg_pc = read16 (0xfffe);
 }
-
-int do_syscall(int op, int *longresult);
 
 /* execute a single instruction or handle interrupts and return */
 
