@@ -80,6 +80,20 @@ void read_mapfile(char *filename) {
   mapfile_loaded = 1;
 }
 
+// Given a string, return the address of that symbol
+// or -1 if the symbol is not found
+int get_sym_address(char *sym) {
+  int i;
+
+  if (sym==NULL || *sym=='\0') return(-1);
+
+  for (i = 0; i < mapcnt; i++) {
+    if (!strcmp(maparray[i].sym, sym))
+      return(maparray[i].addr);
+  }
+  return(-1);
+}
+
 // Given an address, return a string which
 // has the nearest symbol below the address.
 // Also return, through a pointer, the offset
