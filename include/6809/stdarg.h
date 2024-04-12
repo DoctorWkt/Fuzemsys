@@ -1,17 +1,22 @@
-/*
- *	This is a bit strange because our argments are left to right on
- *	the stack.
- */
-#ifndef _STDARG_H
-#define	_STDARG_H
+/*  stdarg.h - Support for variable argument functions
 
-typedef unsigned char *va_list;
+    By Pierre Sarrazin <http://sarrazip.com/>.
+    This file is in the public domain.
+*/
 
-#define __typesize(__type)	(sizeof(__type) == 1 ? sizeof(int) : sizeof(__type))
+#ifndef _stdarg_h_
+#define _stdarg_h_
 
-#define va_start(__ap, __last)	((__ap) = (va_list)(&(__last)))
-#define va_end(__ap)
 
-#define va_arg(__ap, __type)	(*((__type *)(void *)(__ap -= __typesize(__type))))
+typedef char *va_list;
 
-#endif
+
+char *__va_arg(va_list *app, unsigned int sizeInBytes);
+
+
+#define va_start(ap, lastFixed) do { (ap) = (char *) &(lastFixed) + sizeof(lastFixed); } while (0)
+#define va_arg(ap, type) (* (type *) __va_arg(&(ap), sizeof(type)))
+#define va_end(ap) do {} while (0)
+
+
+#endif  /* _stdarg_h_ */
