@@ -37,6 +37,15 @@ void read_mapfile(char *filename) {
   char *sym;
   int i = 0;
 
+  // Free any existing map entries in case
+  // we get called multiple times
+  if (maparray != NULL) {
+    for (i = 0; i < mapcnt; i++)
+      free(maparray[i].sym);
+    free(maparray);
+    cidx=mapcnt=0;
+  }
+
   // To start with, open the file, read in
   // each line and count lines with " C "
   zin = fopen(filename, "r");
@@ -49,7 +58,7 @@ void read_mapfile(char *filename) {
   fclose(zin);
 
   // Build the array of map entries.
-  // Add room for an extra empty element 
+  // Add room for an extra empty element.
   maparray =
     (struct mapentry *) malloc((mapcnt + 1) * sizeof(struct mapentry));
   if (maparray == NULL) { perror(filename); return; }
@@ -90,6 +99,21 @@ int get_sym_address(char *sym) {
   for (i = 0; i < mapcnt; i++) {
     if (!strcmp(maparray[i].sym, sym))
       return(maparray[i].addr);
+  }
+  return(-1);
+}
+
+// Given a string, return the end address of
+// the symbol, i.e. one below the next symbol
+// or -1 if the symbol is not found
+int get_sym_end_address(char *sym) {
+  int i;
+
+  if (sym==NULL || *sym=='\0') return(-1);
+
+  for (i = 0; i < mapcnt; i++) {
+    if (!strcmp(maparray[i].sym, sym))
+      return(maparray[i+1].addr - 1);
   }
   return(-1);
 }

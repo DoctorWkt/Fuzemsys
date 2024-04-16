@@ -5,7 +5,7 @@ brk on 300 gives -1
 brk on 400 gives -1
 brk on 500 gives -1
 brk on 600 gives -1
-brk on 700 gives -1
+brk on 700 gives 0
 brk on 800 gives 0
 brk on 900 gives 0
 brk on a00 gives 0

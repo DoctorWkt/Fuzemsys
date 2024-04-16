@@ -18,10 +18,12 @@
 #include "exec.h"
 #include "syscalls.h"
 #include "mapfile.h"
+#include "emumon.h"
 
 // Now visible globally for syscalls.c
 uint8_t ram[65536];
-int log_6809 = 0;
+
+FILE *logfile=NULL;
 char *mapfile = NULL;
 
 // Default environment variables
@@ -78,53 +80,12 @@ void e6809_write8(unsigned addr, unsigned char val) {
   }
 }
 
-static const char *make_flags(uint8_t cc) {
-  static char buf[9];
-  char *p = "EFHINZVC";
-  char *d = buf;
-
-  while (*p) {
-    if (cc & 0x80)
-      *d++ = *p;
-    else
-      *d++ = '-';
-    cc <<= 1;
-    p++;
-  }
-  *d = 0;
-  return buf;
-}
-
-// char *get_symbol_and_offset(unsigned int addr, int *offset);
-
-/* Called each new instruction issue */
-void e6809_instruction(unsigned pc) {
-  char buf[80];
-  char *sym=NULL;
-  int offset;
-  struct reg6809 *r = e6809_get_regs();
-
-  if (log_6809) {
-    d6809_disassemble(buf, pc);
-    // See if we have a symbol at this address
-    if (mapfile_loaded)
-      sym= get_symbol_and_offset(pc, &offset);
-
-    if (sym!=NULL)
-      fprintf(stderr, "%12s+%04X: %-16.16s | ", sym, offset, buf);
-    else
-      fprintf(stderr, "%04X: %-16.16s | ", pc, buf);
-
-    fprintf(stderr, "%s %02X:%02X %04X %04X %04X %04X\n", make_flags(r->cc),
-	    r->a, r->b, r->x, r->y, r->u, r->s);
-  }
-}
-
 /* FUZIX executable header */
 static struct exec E;
 
 /* Load an executable into memory */
-void load_executable(char *filename) {
+/* and return the initial PC value */
+static uint16_t load_executable(char *filename) {
   int fd;
   int cnt;
   int loadaddr;
@@ -160,14 +121,10 @@ void load_executable(char *filename) {
       set_initial_brk(bssend);
 // printf("Set initial brk to 0x%x\n", bssend);
 
-      /* Determine the start address */
-      ram[0xFFFE] = loadaddr >> 8;
-      ram[0xFFFF] = loadaddr & 0xff;
-
       /* Now read in the rest of the file */
       cnt = read(fd, &ram[loadaddr], 0xfff0);
       close(fd);
-      return;
+      return(loadaddr);
     }
   }
 
@@ -177,10 +134,9 @@ void load_executable(char *filename) {
     perror(filename);
     exit(1);
   }
-  /* Set the starting address as 0x100 for a raw file */
-  ram[0xFFFE] = 0x01;
-  ram[0xFFFF] = 0x00;
   close(fd);
+  /* Set the starting address as 0x100 for a raw file */
+  return(0x100);
 }
 
 #ifdef DEBUG
@@ -193,9 +149,11 @@ void dumpram() {
 #endif
 
 void usage(char *name) {
-  fprintf(stderr, "Usage: %s [-d] [-m mapfile] executable <arguments>\n\n", name);
-  fprintf(stderr, "\t-d: send debugging information to stderr\n");
-  fprintf(stderr, "\t-m: load a mapfile with symbol information (unused at present)\n\n");
+  fprintf(stderr, "Usage: %s [-M] [-d logfile] [-m mapfile] [-b addr] executable <arguments>\n\n", name);
+  fprintf(stderr, "\t-d: write debugging information to logfile\n");
+  fprintf(stderr, "\t-m: load a mapfile with symbol information\n");
+  fprintf(stderr, "\t-M: start in the monitor\n");
+  fprintf(stderr, "\t-b: set breakpoint at address (decimal or $hex)\n\n");
   fprintf(stderr, "\tIf the FUZIXROOT environment variable is set,\n");
   fprintf(stderr, "\tuse that as the executable's root directory.\n");
   exit(1);
@@ -205,20 +163,42 @@ int set_arg_env(uint16_t sp, char **argv, char **envp);
 void set_fuzix_root(char *dirname);
 
 int main(int argc, char *argv[]) {
-  int opt;
+  int fd, pc, opt;
   uint16_t sp;
   char *fuzixroot;
+  int start_in_monitor=0;
+  int breakpoint;
+  char **brkstr;		// Array of breakpoint strings
+  int i, brkcnt=0;
 
   if (argc<2) usage(argv[0]);
 
-  while ((opt = getopt(argc, argv, "+dm:")) != -1) {
+  // Create an array to hold any breakpoint string pointers
+  brkstr= (char **)malloc(argc * sizeof(char *));
+  if (brkstr==NULL) exit(1);
+
+  // Initialise the monitor before we try to set
+  // up any command-line breakpoints
+  monitor_init();
+
+  while ((opt = getopt(argc, argv, "+d:m:Mb:")) != -1) {
     switch (opt) {
     case 'd':
-      log_6809 = 1;
+      logfile= fopen(optarg, "w+");
+      if (logfile==NULL) {
+	fprintf(stderr, "Unable to open %s\n", optarg); exit(1);
+      }
       break;
     case 'm':
       mapfile = optarg;
       read_mapfile(mapfile);
+      break;
+    case 'M':
+      start_in_monitor=1;
+      break;
+    case 'b':
+      // Cache the pointer for now
+      brkstr[brkcnt++]= optarg;
       break;
     default:
       usage(argv[0]);
@@ -229,7 +209,33 @@ int main(int argc, char *argv[]) {
   memset(ram, 0, 0x1000);
 
   // Load the executable file
-  load_executable(argv[optind]);
+  pc=load_executable(argv[optind]);
+
+  // If we didn't load a map file, append
+  // ".map" to the executable filename.
+  // If that file exists, load that as a
+  // map file.
+  if (mapfile_loaded==0) {
+    mapfile= (char *)malloc(strlen(argv[optind]) + 4);
+    if (mapfile != NULL) {
+      strcpy(mapfile, argv[optind]);
+      strcat(mapfile, ".map");
+      fd= open(mapfile, O_RDONLY);
+      if (fd!=-1) {
+	close(fd);
+      	read_mapfile(mapfile);
+      }
+      free(mapfile);
+    }
+  }
+
+  // Now that we might have a map file, parse any
+  // breakpoint strings and set them
+  for (i=0; i<brkcnt; i++) {
+    breakpoint= parse_addr(brkstr[i], NULL);
+    if (breakpoint != -1)
+      set_breakpoint(breakpoint, BRK_INST);
+  }
 
   // Put the args and envp on the stack.
   // Start the stack below the emulator special locations.
@@ -243,8 +249,15 @@ int main(int argc, char *argv[]) {
   else
     set_fuzix_root("");
 
+  e6809_reset(sp,pc);
 
-  e6809_reset(log_6809, sp);
+  if (start_in_monitor) {
+    pc= monitor(pc);
+    // Change the start address if the monitor says so
+    if (pc!=-1)
+      e6809_reset(sp,(uint16_t)pc);
+  }
+
   while (1)
     e6809_sstep(0, 0);
   return 0;

@@ -5,22 +5,47 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <readline/readline.h>
+#include "emumon.h"
 #include "mapfile.h"
 
 #ifdef CPU_6809
+#include "e6809.h"
+#include "d6809.h"
+
 // Get 8-bit value in memory at the given location
-int getub(int addr) {
+static uint8_t getub(int addr) {
   return(e6809_read8(addr));
 }
-#endif
 
-#if 1
-static unsigned char memory[65536];
+// Fill a buffer with the disassembly of the
+// instruction at the given address. Return
+// the address of the next instruction. The
+// buffer is 80 characters long.
+static int disassemble_instruction(char *buf, int addr) {
+  addr+= d6809_disassemble(buf, addr);
+  return(addr);
+}
 
-int getub(int addr) {
-  return(memory[addr]);
+// Fill a buffer with the current CPU state.
+// The buffer is 80 characters long.
+static void get_cpu_state(char *buf) {
+  e6809_get_statestr(buf);
+}
+
+// Execute one instruction and get the
+// address of the following instruction.
+static int run_instruction(void) {
+  return(e6809_sstep(0, 0));
+}
+
+// Write the given value to memory at
+// the given address. We must deal with
+// oversized arguments.
+static void write_mem(int addr, int val) {
+  e6809_write8(addr, val & 0xff);
 }
 #endif
 
@@ -64,8 +89,6 @@ static command cmd_table[] = {
   { "write",  CMD_WRITE },
   { "b", CMD_BRK },
   { "brk",  CMD_BRK },
-  { "rb", CMD_RBRK },
-  { "rbrk",  CMD_RBRK },
   { "wb", CMD_WBRK },
   { "wbrk",  CMD_WBRK },
   { "nb", CMD_NOBRK },
@@ -73,21 +96,11 @@ static command cmd_table[] = {
   { NULL,  0 }
 };
 
-// Breakpoint types
-enum brkpt_nums
-{
-  BRK_EMPTY,
-  BRK_READ,
-  BRK_WRITE,
-  BRK_RDWR
-};
-
-// Associated strings
+// Breakpoint strings
 char *bpt_str[] = {
   NULL,
-  "rd",
   "wr",
-  "rw"
+  "pc"
 };
 
 // List of breakpoint addresses
@@ -116,7 +129,7 @@ static void remove_all_breakpoints(void) {
 }
 
 // Set a breakpoint
-static void set_breakpoint(int addr, int type) {
+void set_breakpoint(int addr, int type) {
   int i;
 
   for (i=0; i<NUM_BRKPOINTS; i++)
@@ -128,16 +141,64 @@ static void set_breakpoint(int addr, int type) {
   printf("No free breakpoint slot to set a breakpoint!\n");
 }
 
-// Dump memory
-void dump_mem (int start, int end)
+// This is the address of a breakpoint we can
+// ignore. We use this when single-stepping.
+// It gets ignored for one is_breakpoint() call.
+static int ignored_addr= -1;
+
+static void ignore_breakpoint(int addr) {
+  ignored_addr= addr;
+}
+
+// Return 1 if there is a breakpoint of the given
+// type at the given address, 0 otherwise.
+int is_breakpoint(int addr, int type) {
+  int i;
+
+  // Deal with the ignored breakpoint
+  if (addr==ignored_addr) {
+    ignored_addr= -1;
+    return(0);
+  }
+
+  for (i=0; i<NUM_BRKPOINTS; i++)
+    if (brkpointlist[i].brktype== type && 
+	brkpointlist[i].addr == addr)
+      return(1);
+  return(0);
+}
+
+// Dump or disassemble memory
+static void dump_mem (int start, int end, int cmd)
 {
   int addr = start;
+  int newaddr;
   int lsize;
-  char abuf[17];
+  char buf[80];
+  char *sym=NULL;
+  int offset;
 
   if (start > end)
   {
     printf("addresses out of order\n");
+    return;
+  }
+
+  if (cmd==CMD_DISASM) {
+    while(addr < end) {
+      newaddr= disassemble_instruction(buf, addr);
+
+      // See if we have a symbol at this address
+      if (mapfile_loaded)
+        sym= get_symbol_and_offset(addr, &offset);
+
+      if (sym!=NULL)
+        printf("%12s+%04X: %-16.16s\n", sym, offset, buf);
+      else
+        printf("%04X: %-16.16s\n", addr, buf);
+      addr= newaddr;
+    }
+    printf("\n");
     return;
   }
 
@@ -151,15 +212,49 @@ void dump_mem (int start, int end)
     {
       int mb = getub(addr);
       printf("%02X ",mb);
-      abuf[lsize] = isprint(mb)?mb:'.';
+      buf[lsize] = isprint(mb) ? mb : '.';
     }
-    abuf[lsize] = '\0';
+    buf[lsize] = '\0';
     while (lsize++ < 16) printf("   "); 
  
-    puts(abuf);
+    printf("  "); puts(buf);
 
     if(addr > end) break;
   }
+}
+
+// Execute the given number of instructions
+// starting at the given address.
+// Disassemble each instruction beforehand,
+// and print the CPU state out afterward.
+// Return the address of the next instruction.
+static int run_instructions(int cnt, int addr) {
+  int i, offset;
+  char buf[80];
+  char *sym=NULL;
+
+  for (i=0; i< cnt; i++) {
+    disassemble_instruction(buf, addr);
+
+    // See if we have a symbol at this address
+    if (mapfile_loaded)
+      sym= get_symbol_and_offset(addr, &offset);
+
+    if (sym!=NULL)
+      printf("%12s+%04X: %-16.16s | ", sym, offset, buf);
+    else
+      printf("%04X: %-16.16s | ", addr, buf);
+
+    // Before we run the instruction, ignore any
+    // breakpoint at that address, so we won't
+    // fall back into the monitor :-)
+    ignore_breakpoint(addr);
+    addr=run_instruction();
+
+    get_cpu_state(buf);
+    printf("%s\n", buf);
+  }
+  return(addr);
 }
 
 // Given a string that represents an address,
@@ -167,7 +262,7 @@ void dump_mem (int start, int end)
 // issym true if the string used a symbol.
 // See the usage below for more details.
 // -1 is returned if address is unparseable
-static int parse_addr(char *addr, int *issym) {
+int parse_addr(char *addr, int *issym) {
   char *offptr;
   int offset=0;
   int symaddr;
@@ -253,20 +348,19 @@ static int get_command (char *str)
 static void monitor_usage() {
 
   printf("Monitor usage:\n\n");
-  printf("s, step                   - single step\n");
+  printf("s, step <num>             - execute 1 or <num> instructions\n");
   printf("x, exit                   - exit the monitor, back to running\n");
   printf("q, quit                   - quit the emulation\n");
   printf("g, go <addr>              - start execution at address\n");
   printf("p, print <addr> [<addr2>] - dump memory in the address range\n");
   printf("d, dis <addr> [<addr2>]   - disassemble memory in the address range\n");
   printf("w, write <addr> <value>   - overwrite memory with value\n");
-  printf("b, brk [<addr>]           - set read/write breakpoint at <addr> or\n");
+  printf("b, brk [<addr>]           - set instruction breakpoint at <addr> or\n");
   printf("                            show list of breakpoints\n");
-  printf("rb, rbrk <addr>           - set a read breakpoint at <addr>\n");
   printf("wb, wbrk <addr>           - set a write breakpoint at <addr>\n");
-  printf("nb, nbrk [<addr>]         - remove breakpoint at <addr>, or all\n");
+  printf("nb, nbrk [<addr>]         - remove breakpoint at <addr>, or all\n\n");
 
-  printf("\n\nAddresses and Values\n\n");
+  printf("Addresses and Values\n\n");
   printf("Decimal literals start with [0-9], e.g. 23\n");
   printf("Hexadecimal literals start with $, e.g. $1234\n");
   printf("Symbols start with _ or [A-Za-z], e.g. _printf\n");
@@ -282,12 +376,16 @@ void monitor_init (void) {
 // Monitor function: prompt user for commands and execute them.
 // Returns either an address to start execution at, or -1 to
 // continue execution at the current program counter.
-int emumon(void) {
-  char  *cmd_str;
-  char  *arg[10];
+int monitor(int addr) {
+  char *cmd_str;
+  char *arg[10];
   char *sym;
-  int   arg_count;
-  int   i, cmd, addr, addr2, offset;
+  int  arg_count;
+  int  i, cmd, addr2, offset;
+  int  issym, count, val;
+
+  if (is_breakpoint(addr, BRK_INST))
+    printf("Stopped at $%04X\n", addr);
 
   while (1) {
     fflush(stdout);
@@ -312,7 +410,7 @@ int emumon(void) {
       case CMD_BRK:
 	if (arg_count==2) {
 	  addr= parse_addr_msg(arg[1], NULL);
-	  if (addr!=-1) set_breakpoint(addr, BRK_RDWR);
+	  if (addr!=-1) set_breakpoint(addr, BRK_INST);
 	} else {
 	  // Otherwise print out the breakpoints
 	  printf("Breakpoints: \n\n");
@@ -330,14 +428,6 @@ int emumon(void) {
 	      printf("\n");
 	    }
 	}
-	break;
-
-      case CMD_RBRK:
-	if (arg_count!=2) {
-	  printf("  Usage: %s <addr>\n", arg[0]); break;
-	}
-	addr= parse_addr_msg(arg[1], NULL);
-	if (addr!=-1) set_breakpoint(addr, BRK_READ);
 	break;
 
       case CMD_WBRK:
@@ -365,29 +455,53 @@ int emumon(void) {
 	if (addr!=-1) return(addr);
 	break;
 
+      case CMD_DISASM:
       case CMD_PRINT:
+	if (arg_count<2 || arg_count>3) {
+	  printf("  Usage: %s <addr> [<addr2>]\n", arg[0]); break;
+	}
+	addr= parse_addr_msg(arg[1], &issym);
+	// We have two addresses, so parse the second
+	if (arg_count==3)
+	  addr2= parse_addr_msg(arg[2], NULL);
+	else {
+	  // No second address. If the first address wasn't a symbol,
+	  // add 0xFF to the first so we print 256 bytes.
+	  // If a symbol, find the end address for the symbol
+	  // (assuming it's a routine).
+	  if (issym==0)
+	    addr2= addr + 0xFF;
+	  else
+	    addr2= get_sym_end_address(arg[1]);
+	}
+
+	if (addr!= -1 || addr != -1)
+	  dump_mem(addr, addr2, cmd);
+	break;
+
+      case CMD_STEP:
+	if (arg_count>2) {
+	  printf("  Usage: %s [<num>]\n", arg[0]); break;
+	}
+ 	count=1;
+	if (arg_count==2)
+	  count= strtol(arg[1], NULL, 10);
+	addr= run_instructions(count, addr);
+	break;
+
+	case CMD_WRITE:
 	if (arg_count!=3) {
-	  printf("  Usage: %s <addr> <addr2>\n", arg[0]); break;
+	  printf("  Usage: %s <addr> <value>\n", arg[0]); break;
 	}
 	addr= parse_addr_msg(arg[1], NULL);
-	addr2= parse_addr_msg(arg[2], NULL);
-	if (addr!= -1 || addr != -1)
-	  dump_mem(addr, addr2);
+	if (*arg[2]=='$')
+	  val= strtol(arg[2]+1, NULL, 16);
+	else
+	  val= strtol(arg[2], NULL, 10);
+	write_mem(addr, val);
 	break;
 
       default: monitor_usage();
     }
-  }
-}
-
-void main() {
-  monitor_init();
-  int addr;
-
-  read_mapfile("test022.map");
-
-  while (1) {
-    addr= emumon();
-    printf("Out of emumon with address %d\n", addr);
   }
 }

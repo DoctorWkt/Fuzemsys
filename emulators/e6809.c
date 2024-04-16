@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "e6809.h"
+#include "d6809.h"
+#include "mapfile.h"
+#include "emumon.h"
 #include "syscalls.h"
 
 /* code assumptions:
@@ -73,6 +76,9 @@ static unsigned *rptr_xyus[4] = {
 };
 
 static unsigned trace_cpu;
+
+/* If 1, we hit a write breakpoint */
+static unsigned write_brkpt= 0;
 
 /* user defined read and write functions */
 
@@ -189,7 +195,12 @@ static einline unsigned read8 (unsigned address)
 
 static einline void write8 (unsigned address, unsigned data)
 {
-	e6809_write8(address & 0xffff, (unsigned char) data);
+	address &= 0xffff;
+	e6809_write8(address, (unsigned char) data);
+	if (is_breakpoint(address, BRK_WRITE)) {
+	  write_brkpt= 1;
+	  printf("Write at $%04X\n", address);
+	}
 }
 
 static einline unsigned read16 (unsigned address)
@@ -1108,7 +1119,7 @@ static einline void inst_tfr (void)
 
 /* reset the 6809 */
 
-void e6809_reset (int trace, uint16_t sp)
+void e6809_reset (uint16_t sp, uint16_t pc)
 {
 	reg_x = 0;
 	reg_y = 0;
@@ -1123,11 +1134,46 @@ void e6809_reset (int trace, uint16_t sp)
 	reg_cc = FLAG_I | FLAG_F;
 	irq_status = IRQ_NORMAL;
 
-	reg_pc = read16 (0xfffe);
+	reg_pc = pc;
 }
 
-/* execute a single instruction or handle interrupts and return */
+uint16_t e6809_get_pc(void) {
+  return(reg_pc);
+}
 
+void e6809_set_pc(uint16_t pc) {
+  reg_pc= pc;
+}
+
+const char *e6809_get_flagstr(void) {
+  static char buf[9];
+  unsigned cc= reg_cc;
+  char *p = "EFHINZVC";
+  char *d = buf;
+
+  while (*p) {
+    if (cc & 0x80)
+      *d++ = *p;
+    else
+      *d++ = '-';
+    cc <<= 1;
+    p++;
+  }
+  *d = 0;
+  return(buf);
+}
+
+/* Fill a buffer with the current registers and flags */
+/* Assume the buffer is no more than 80 characters */
+void e6809_get_statestr(char *buffer) {
+  if (buffer==NULL) return;
+
+  snprintf(buffer, 80, "%s %02X:%02X %04X %04X %04X %04X",
+	e6809_get_flagstr(), reg_a & 0xff, reg_b & 0xff, reg_x & 0xffff,
+	reg_y & 0xffff, reg_u & 0xffff, reg_s & 0xffff);
+}
+
+/* Execute a single instruction or handle interrupts and return */
 unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 {
 	unsigned op;
@@ -1135,6 +1181,20 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 	unsigned ea, i0, i1, r;
 	int longresult;
 	int32_t result;
+  	char buf[80];
+  	char *sym=NULL;
+  	int addr, offset;
+
+	// If the PC is a breakpoint, or we hit a write
+	// breakpoint, fall into the monitor
+	if (write_brkpt==1 || is_breakpoint(reg_pc, BRK_INST)) {
+	  write_brkpt=0;
+	  addr= monitor(reg_pc);
+
+	  // If we have a new PC from the monitor, set it
+	  if (addr != -1)
+	    reg_pc= addr & 0xffff;
+	}
 
 	if (irq_f) {
 		if (get_cc (FLAG_F) == 0) {
@@ -1183,8 +1243,23 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 		return cycles + 1;
 	}
 
-	e6809_instruction(reg_pc);
-	op = pc_read8 ();
+	// Disassemble the current instruction.
+	// Once the instruction executes, we will
+	// print out the CPU state
+	if (logfile!=NULL) {
+	  d6809_disassemble(buf, reg_pc);
+
+	  // See if we have a symbol at this address
+  	  if (mapfile_loaded)
+    	    sym= get_symbol_and_offset(reg_pc, &offset);
+
+  	  if (sym!=NULL)
+    	    fprintf(logfile, "%12s+%04X: %-16.16s | ", sym, offset, buf);
+  	  else
+    	    fprintf(logfile, "%04X: %-16.16s | ", reg_pc, buf);
+	}
+
+	op = pc_read8();
 
 	switch (op) {
 	/* page 0 instructions */
@@ -2636,7 +2711,12 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 		exit(1);
 	}
 
-	return cycles;
+	if (logfile != NULL) {
+	  e6809_get_statestr(buf);
+  	  fprintf(logfile, "%s\n", buf);
+	}
+
+	return reg_pc;
 }
 
 struct reg6809 *e6809_get_regs(void)
