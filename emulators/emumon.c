@@ -423,7 +423,7 @@ static void monitor_usage() {
   printf("Decimal literals start with [0-9], e.g. 23\n");
   printf("Hexadecimal literals start with $, e.g. $1234\n");
   printf("Symbols start with _ or [A-Za-z], e.g. _printf\n");
-  printf("Synbols + offset, e.g. _printf+23, _printf+$100\n");
+  printf("Synbols + offset, e.g. _printf+23, _printf+$100\n\n");
 }
 
 // Initialise the monitor variables
@@ -435,16 +435,16 @@ void monitor_init(void) {
 // Monitor function: prompt user for commands and execute them.
 // Returns either an address to start execution at, or -1 to
 // continue execution at the current program counter.
-int monitor(int addr) {
+int monitor(int curpc) {
   char *cmd_str;
   char *arg[10];
   char *sym;
-  int arg_count;
+  int addr, arg_count;
   int i, cmd, addr2, offset;
   int issym, count, val;
 
-  if (is_breakpoint(addr, BRK_INST))
-    printf("Stopped at $%04X\n", addr);
+  if (is_breakpoint(curpc, BRK_INST))
+    printf("Stopped at $%04X\n", curpc);
 
   while (1) {
     fflush(stdout);
@@ -555,7 +555,7 @@ int monitor(int addr) {
       count = 1;
       if (arg_count == 2)
 	count = strtol(arg[1], NULL, 10);
-      addr = run_instructions(count, addr);
+      curpc = run_instructions(count, curpc);
       break;
 
     case CMD_WRITE:
