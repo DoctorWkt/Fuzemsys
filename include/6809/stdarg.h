@@ -1,22 +1,22 @@
-/*  stdarg.h - Support for variable argument functions
+/*
+ * stdarg.h - variable arguments
+ *
+ * From the ack cc
+ *
+ * (c) copyright 1987 by the Vrije Universiteit, Amsterdam, The Netherlands.
+ * See the copyright notice in the ACK home directory, in the file "Copyright".
+ */
+/* $Id: stdarg.h,v 1.3 2024/04/16 03:12:09 wkt Exp $ */
 
-    By Pierre Sarrazin <http://sarrazip.com/>.
-    This file is in the public domain.
-*/
+#ifndef _STDARG_H
+#define	_STDARG_H
 
-#ifndef _stdarg_h_
-#define _stdarg_h_
+typedef char* va_list;
 
+#define __vasz(x)		sizeof(x)
 
-typedef char *va_list;
+#define va_start(ap, parmN)	(ap = (va_list)&parmN + __vasz(parmN))
+#define va_arg(ap, type)	(*((type *)(void *)((ap += __vasz(type)) - __vasz(type))))
+#define va_end(ap)
 
-
-char *__va_arg(va_list *app, unsigned int sizeInBytes);
-
-
-#define va_start(ap, lastFixed) do { (ap) = (char *) &(lastFixed) + sizeof(lastFixed); } while (0)
-#define va_arg(ap, type) (* (type *) __va_arg(&(ap), sizeof(type)))
-#define va_end(ap) do {} while (0)
-
-
-#endif  /* _stdarg_h_ */
+#endif
