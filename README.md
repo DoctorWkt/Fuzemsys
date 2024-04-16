@@ -44,3 +44,45 @@ test003.c: OK
 There are some commands in the `cmds/` directory which will run under the
 emulator. At present (April 16 2024) the stdio library mostly works but
 `printf()` isn't working yet (although `stdarg.h` works).
+
+## Emulator Usage
+
+The `emu6809` emulator now has support for map files and a built-in monitor.
+Here is the emulator's usage details:
+
+```
+Usage: emu6809 [-M] [-d logfile] [-m mapfile] [-b addr] executable <arguments>
+
+	-d: write debugging information to logfile
+	-m: load a mapfile with symbol information
+	-M: start in the monitor
+	-b: set breakpoint at address (decimal or $hex)
+
+	If the FUZIXROOT environment variable is set,
+	use that as the executable's root directory.
+```
+
+and here are the monitor instructions:
+
+```
+Monitor usage:
+
+s, step <num>             - execute 1 or <num> instructions
+x, exit                   - exit the monitor, back to running
+q, quit                   - quit the emulation
+g, go <addr>              - start execution at address
+p, print <addr> [<addr2>] - dump memory in the address range
+d, dis <addr> [<addr2>]   - disassemble memory in the address range
+w, write <addr> <value>   - overwrite memory with value
+b, brk [<addr>]           - set instruction breakpoint at <addr> or
+                            show list of breakpoints
+wb, wbrk <addr>           - set a write breakpoint at <addr>
+nb, nbrk [<addr>]         - remove breakpoint at <addr>, or all
+
+Addresses and Values
+
+Decimal literals start with [0-9], e.g. 23
+Hexadecimal literals start with $, e.g. $1234
+Symbols start with _ or [A-Za-z], e.g. _printf
+Synbols + offset, e.g. _printf+23, _printf+$100
+```
