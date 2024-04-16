@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Clear the memory
-  memset(ram, 0, 0x1000);
+  memset(ram, 0, 0x10000);
 
   // Load the executable file
   pc=load_executable(argv[optind]);
@@ -229,8 +229,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Now that we might have a map file, parse any
-  // breakpoint strings and set them
+  // Now that we might have a map file,
+  // parse any breakpoint strings and set them
   for (i=0; i<brkcnt; i++) {
     breakpoint= parse_addr(brkstr[i], NULL);
     if (breakpoint != -1)
@@ -249,8 +249,10 @@ int main(int argc, char *argv[]) {
   else
     set_fuzix_root("");
 
+  // Reset the CPU state
   e6809_reset(sp,pc);
 
+  // Start in the monitor if needed
   if (start_in_monitor) {
     pc= monitor(pc);
     // Change the start address if the monitor says so
@@ -258,6 +260,7 @@ int main(int argc, char *argv[]) {
       e6809_reset(sp,(uint16_t)pc);
   }
 
+  // Otherwise loop executing instructions
   while (1)
     e6809_sstep(0, 0);
   return 0;
