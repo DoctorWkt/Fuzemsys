@@ -41,5 +41,6 @@ test003.c: OK
 
 ## Commands
 
-There are some commands in the `cmds/` directory which will run under the emulator.
-At present (April 6 2024) the stdio library isn't working yet.
+There are some commands in the `cmds/` directory which will run under the
+emulator. At present (April 16 2024) the stdio library mostly works but
+`printf()` isn't working yet (although `stdarg.h` works).
