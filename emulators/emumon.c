@@ -1,7 +1,10 @@
 // Monitor for the FUZIX emulators
 // (c) 2024 Warren Toomey, GPL3
 //
-// Modelled on the monitor in the 6809 emulator by Arto Salmi
+// Modelled on the monitor in the 6809 emulator by Arto Salmi.
+//
+// If you are porting to another emulator, scroll
+// down and read the PORTING guide.
 
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +13,56 @@
 #include <readline/readline.h>
 #include "emumon.h"
 #include "mapfile.h"
+
+// PORTING NOTES
+
+// Firstly, the monitor uses readline() which has a global variable
+// called PC. If your emulator also has a global variable called PC,
+// you will need to rename it or readline() will tromp all over it.
+//
+// You need to define these "shim" functions in your emulator so that
+// the monitor can access memory etc.
+// - static uint8_t getub(int addr)
+// - static int disassemble_instruction(char *buf, int addr)
+// - static void get_cpu_state(char *buf)
+// - static int run_instruction(void)
+// - static void write_mem(int addr, int val)
+//
+// See the comments above these functions in the CPU_6809 area below.
+// Note that addresses are not constrained to be 16-bits only, so you
+// will need to truncate them if necessary.
+//
+// The monitor itself provides these functions:
+// - void set_breakpoint(int addr, int type)
+// - int is_breakpoint(int addr, int type)
+// - int parse_addr(char *addr, int *issym)
+// - void monitor_init(void)
+// - int monitor(int addr)
+//
+// The breakpoint types are defined in emumon.h. monitor_init()
+// should be called before any breakpoints are set.
+//
+// parse_addr() calls get_sym_address() from mapfile.c. If you
+// use it to parse addresses then run read_mapfile() first.
+// Have a look at the main() code in emu6809.c as an example.
+//
+// monitor() needs the current PC as argument. It returns -1 to be
+// ignored, or the address of the next instruction to execute.
+//
+// To deal with breakpoints in your emulator, set a global variable
+// after a memory location is written to. Then, in your main loop,
+// have some code like this (from e6809.c):
+//        // If the PC is a breakpoint, or we hit a write
+//        // breakpoint, fall into the monitor
+//        if (write_brkpt==1 || is_breakpoint(reg_pc, BRK_INST)) {
+//          write_brkpt=0;
+//          addr= monitor(reg_pc);
+//
+//          // If we have a new PC from the monitor, set it
+//          if (addr != -1)
+//            reg_pc= addr & 0xffff;
+//        }
+
 
 #ifdef CPU_6809
 #include "e6809.h"
