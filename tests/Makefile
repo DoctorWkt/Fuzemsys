@@ -36,6 +36,7 @@ test023: CRT= $(NOSTDIOCRT0) cprintf.o
 test024: CRT= $(NOSTDIOCRT0) cprintf.o
 test025: CRT= $(NOSTDIOCRT0) cprintf.o
 test027: CRT= $(NOSTDIOCRT0) cprintf.o
+#getime: CRT= $(NOSTDIOCRT0) cprintf.o
 
 # Some tests use stdio
 test022: CRT= $(CRT0) cprintf.o

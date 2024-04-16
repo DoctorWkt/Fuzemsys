@@ -410,7 +410,7 @@ int do_syscall(int op, int *longresult) {
   int result;		// Native syscall result
   int32_t sres;		// Emulator signed result
   time_t tim;		// Time value
-  int64_t *ktim;	// Pointer to FUZIX ktime struct
+  int32_t *ktim;	// Pointer to FUZIX ktime struct. Assumes NO_64BIT
   pid_t pid, pgid;	// Process id
   int16_t *iptr;	// Pointer to integer
   uint16_t addr;	// Address in emulator memory
@@ -582,12 +582,12 @@ int do_syscall(int op, int *longresult) {
 	group= uiarg(0);
 	result= setgid(group);
 	break;
-    case 27:		// _time XXX not working as yet
-	ktim= (int64_t *)get_memptr(uiarg(0));
+    case 27:		// _time, assumes NO_64BIT
+	ktim= (int32_t *)get_memptr(uiarg(0));
 	if (ktim==NULL) { result=-1; errno=EFAULT; break; }
 	tim= time(NULL);
 	// Convert to FUZIX endian
-	*ktim= htoemu64(tim);
+	*ktim= htoemu32((int32_t)tim & 0xffffffff);
 	return(0);
     case 29:		// ioctl. Only a few implemented
 	fd= uiarg(0);
