@@ -238,7 +238,7 @@ static void dump_mem (int start, int end, int cmd)
   }
 
   if (cmd==CMD_DISASM) {
-    while(addr < end) {
+    while(addr <= end) {
       newaddr= disassemble_instruction(buf, addr);
 
       // See if we have a symbol at this address
@@ -246,7 +246,7 @@ static void dump_mem (int start, int end, int cmd)
         sym= get_symbol_and_offset(addr, &offset);
 
       if (sym!=NULL)
-        printf("%12s+%04X: %-16.16s\n", sym, offset, buf);
+        printf("%12s+$%04X: %-16.16s\n", sym, offset, buf);
       else
         printf("%04X: %-16.16s\n", addr, buf);
       addr= newaddr;
@@ -476,7 +476,7 @@ int monitor(int addr) {
 	      if (mapfile_loaded) {
 		sym= get_symbol_and_offset(brkpointlist[i].addr, &offset);
 		if (sym!=NULL)
-		  printf("\t%s+%d", sym, offset);
+		  printf("\t%s+$%X", sym, offset);
 	      }
 	      printf("\n");
 	    }
