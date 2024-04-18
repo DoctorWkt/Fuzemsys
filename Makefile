@@ -8,6 +8,7 @@ install:
 	(cd libs;      make install)
 
 clean:
-	(cd emulators; make clean)
-	(cd libs;      make clean)
-	(cd tests;     make clean)
+	(cd emulators;   make clean)
+	(cd libs;        make clean)
+	(cd tests;       make clean)
+	(cd cmds/simple; make clean)

@@ -28,7 +28,7 @@ do
   # and print out the difference
   if [ "$?" -eq "1" ]
   then echo ": failed"
-       diff -c "out/$b" testout
+       # diff -c "out/$b" testout
        echo
 
   # No failure, so announce success

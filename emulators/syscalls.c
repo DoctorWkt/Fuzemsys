@@ -62,6 +62,12 @@ struct _uzistat
         uint32_t st_timeh;      /* Time high bytes */
 };
 
+// FUZIX dirent structure
+struct _dirent {
+        uint16_t d_ino;
+        char     d_name[30];
+};
+
 // FUZIX termios stuff
 typedef uint16_t fotcflag_t;
 typedef uint16_t fospeed_t;
@@ -383,6 +389,41 @@ static void copystat(struct stat *src, struct _uzistat *dst) {
         dst->st__ctime= htoemu16(src->st_ctime & 0xffff);
 }
 
+// Determine if the path is a directory. If so, read the
+// directory and create a temporary file which contains
+// _dirent records that match the directory. Unlink the
+// file so it goes away on a close(). Return the opened fd.
+int make_dirent_file(const char *path) {
+  DIR *Dir;
+  struct dirent *Dirent;
+  struct _dirent fuzdent;
+  int fd;
+  char filename[]= "/tmp/syscall.XXXXXX";
+
+  // Can we open it as a directory?
+  Dir= opendir(path);
+  if (Dir==NULL)
+    return(-1);
+
+  // Make a temporary file
+  fd= mkstemp(filename);
+  if (fd==-1) {
+    closedir(Dir); return(-1);
+  }
+
+  // Read directory entries and build the _dirent entries
+  while ((Dirent = readdir(Dir)) != NULL) {
+    fuzdent.d_ino= htoemu16(Dirent->d_ino & 0xffff);
+    strncpy(fuzdent.d_name, Dirent->d_name, 30);
+    write(fd, &fuzdent, sizeof(fuzdent));
+  }
+
+  // Close the dir, rewind and unlink the file, return the fd
+  lseek(fd, SEEK_SET, 0);
+  closedir(Dir); unlink(filename);
+  return(fd);
+}
+
 // Get the syscall to perform and return the return value.
 // Sets the host errno to 0, or non-zero on error.
 // If *longresult is 1, the result is 32-bits wide.
@@ -447,7 +488,12 @@ int do_syscall(int op, int *longresult) {
 	flags |= (oflags & FO_TRUNC)   ? O_TRUNC : 0;
 	flags |= (oflags & FO_NOCTTY)  ? O_NOCTTY : 0;
 	flags |= (oflags & FO_CLOEXEC) ? O_CLOEXEC : 0;
-	result= open(path, flags, mode);
+
+	// If this is a directory, then we make a file that contains
+	// the contents of the directory in _dirent format. If not,
+	// do a normal open()
+	if ((result= make_dirent_file(path)) == -1)
+	  result= open(path, flags, mode);
 	break;
     case 2:		// close
 	fd= uiarg(0);

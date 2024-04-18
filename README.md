@@ -8,8 +8,8 @@ get merged back into the FUZIX Compiler Kit.
 
 Firstly get:
 
- + https://github.com/EtchedPixels/Fuzix-Bintools
- + https://github.com/EtchedPixels/Fuzix-Compiler-Kit
++ https://github.com/EtchedPixels/Fuzix-Bintools
++ https://github.com/EtchedPixels/Fuzix-Compiler-Kit
 
 Compile Bintools and install into `/opt/fcc`, then compile the compiler kit
 and install there as well.

@@ -5,7 +5,7 @@ CRT0        = /opt/fcc/lib/6809/crt0.o
 NOSTDIOCRT0 = /opt/fcc/lib/6809/crt0nostdio.o
 LIBS        = /opt/fcc/lib/6809/libc.a /opt/fcc/lib/6809/lib6809.a
 
-BINS=cat echo ln mkdir oldgrep rm
+BINS=cat echo ln mkdir oldgrep rm prdir
 
 # Programs that don't use stdio
 cat: CRT= $(NOSTDIOCRT0) cprintf.o
@@ -17,6 +17,8 @@ rm: CRT= $(NOSTDIOCRT0) cprintf.o
 
 # Programs that use stdio
 basename: CRT= $(CRT0)
+ls: CRT= $(CRT0)
+prdir: CRT= $(CRT0)
 
 all: cprintf.o $(BINS)
 
