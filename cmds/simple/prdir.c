@@ -17,10 +17,9 @@ int main(int argc, char *argv[]) {
     printf("Cannot open directory '%s'\n", argv[1]);
     return(1);
   }
-
   // Process each entry.
   while ((Dirent = readdir(Dir)) != NULL) {
-    printf("%06d %s\n", Dirent->d_ino, Dirent->d_name);
+    printf("%ld %s\n", Dirent->d_ino, Dirent->d_name);
   }
 
   // Close directory and exit.

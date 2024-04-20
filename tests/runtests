@@ -2,6 +2,14 @@
 # Run each test and compare
 # against known good output
 
+dodiff=0;
+
+if [ "$#" -ge 1 ]
+then if [ "$1" == "-d" ]
+     then dodiff=1;
+     fi
+fi
+
 # Make all the tests
 make > /dev/null 2> /dev/null
 
@@ -28,8 +36,10 @@ do
   # and print out the difference
   if [ "$?" -eq "1" ]
   then echo ": failed"
-       # diff -c "out/$b" testout
-       echo
+       if [ $dodiff -eq 1 ]
+       then diff -c "out/$b" testout
+       else echo
+       fi
 
   # No failure, so announce success
   else echo ": OK"

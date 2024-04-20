@@ -9,8 +9,18 @@
 #include <fcntl.h>
 #include <string.h>
 
+#define WKT_VERSION 1
+
 static struct __dirent *dnext(DIR *dir)
 {
+#ifdef WKT_VERSION
+  int cnt;
+
+  if (dir==NULL) return(NULL);
+  cnt= read(dir->dd_fd, dir->_priv.buf, sizeof(struct __dirent));
+  if (cnt <=0) return(NULL);
+  return((struct __dirent *)dir->_priv.buf);
+#else
         if (dir->_priv.next == dir->_priv.last) {
                 int l = read(dir->dd_fd, dir->_priv.buf, sizeof(dir->_priv.buf));
                 if (l <= 0)
@@ -20,6 +30,7 @@ static struct __dirent *dnext(DIR *dir)
                 dir->_priv.next = 0;
         }
         return (struct __dirent *)(dir->_priv.buf + 32 * dir->_priv.next++);
+#endif
 }
 
 struct dirent *readdir(DIR * dir)

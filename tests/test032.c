@@ -1,0 +1,48 @@
+// Tring to get readdir to work.
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <alloc.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+
+
+static struct __dirent *dnext(DIR * dir) {
+  int cnt;
+
+  if (dir==NULL) return(NULL);
+  cnt= read(dir->dd_fd, dir->_priv.buf, sizeof(struct __dirent));
+  if (cnt <=0) return(NULL);
+  return((struct __dirent *)dir->_priv.buf);
+}
+
+int main(int argc, char *argv[]) {
+  struct dirent *Dirent;
+  DIR *Dir;
+
+  // Ensure correct argument count.
+  if (argc != 2) {
+    printf("Usage: %s <dirname>\n", argv[0]);
+    return(1);
+  }
+
+  // Ensure we can open directory.
+  Dir = opendir(argv[1]);
+  if (Dir == NULL) {
+    printf("Cannot open directory '%s'\n", argv[1]);
+    return (1);
+  }
+  // Process each entry.
+  while ((Dirent = readdir(Dir)) != NULL) {
+    // Don't print inode numbers as they change
+    // printf("%ld >%s<\n", Dirent->d_ino, Dirent->d_name);
+    printf("%s\n", Dirent->d_name);
+  }
+
+  // Close directory and exit.
+  closedir(Dir);
+  return (0);
+}
