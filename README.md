@@ -37,13 +37,14 @@ $ ./runtests
 test001.c: OK
 test002.c: OK
 test003.c: OK
+...
+test032.c: OK
 ```
 
 ## Commands
 
 There are some commands in the `cmds/` directory which will run under the
-emulator. At present (April 16 2024) the stdio library mostly works but
-`printf()` isn't working yet (although `stdarg.h` works).
+emulator.
 
 ## Emulator Usage
 
