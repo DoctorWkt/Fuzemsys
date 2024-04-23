@@ -45,7 +45,7 @@ test026: CRT= $(CRT0) cprintf.o
 test028: CRT= $(CRT0) cprintf.o
 test029: CRT= $(CRT0)
 test031: CRT= $(CRT0)
-test032: CRT= $(CRT0)
+test032: CRT= $(CRT0) cprintf.o
 
 all: cprintf.o $(TESTS)
 

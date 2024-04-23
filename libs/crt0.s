@@ -9,8 +9,7 @@ start:
 		.word __data_size		; data size info
 		.word __bss_size		; bss size info
 		.byte 16			; entry relative to start
-		.byte 0				; no chmem hint
-		.byte 0				; no stack hint
+		.word __end			; to help the emulator :-)
 		.byte 0				; ZP not used on 6809
 
 		jmp start2

@@ -1,4 +1,4 @@
-// Tring to get readdir to work.
+// Trying to get readdir to work.
 #include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -9,14 +9,36 @@
 #include <fcntl.h>
 #include <string.h>
 
+void cprintf(char *fmt, ...);
 
-static struct __dirent *dnext(DIR * dir) {
+// #define WKT_VERSION 1
+
+static struct __dirent *ddnext(DIR * dir) {
+#ifdef WKT_VERSION
   int cnt;
 
-  if (dir==NULL) return(NULL);
-  cnt= read(dir->dd_fd, dir->_priv.buf, sizeof(struct __dirent));
-  if (cnt <=0) return(NULL);
-  return((struct __dirent *)dir->_priv.buf);
+  if (dir == NULL)
+    return (NULL);
+  cnt = read(dir->dd_fd, dir->_priv.buf, sizeof(struct __dirent));
+  if (cnt <= 0)
+    return (NULL);
+  return ((struct __dirent *) dir->_priv.buf);
+#else
+  uint8_t oldnext;
+
+  if (dir->_priv.next == dir->_priv.last) {
+    int l = read(dir->dd_fd, dir->_priv.buf, sizeof(dir->_priv.buf));
+    if (l <= 0)
+      return NULL;
+    l /= 32;
+    dir->_priv.last = l;
+    dir->_priv.next = 0;
+  }
+  oldnext = dir->_priv.next;
+  // ++ on dir->_priv.next doesn't yet work
+  dir->_priv.next = dir->_priv.next + 1;
+  return (struct __dirent *) (dir->_priv.buf + 32 * oldnext);
+#endif
 }
 
 struct dirent *rddir(DIR * dir) {
@@ -29,7 +51,7 @@ struct dirent *rddir(DIR * dir) {
   }
 
   do {
-    direntry = dnext(dir);
+    direntry = ddnext(dir);
     if (direntry == NULL)
       return NULL;
   } while (direntry->d_name[0] == 0);
@@ -54,6 +76,7 @@ int main(int argc, char *argv[]) {
     printf("Cannot open directory '%s'\n", argv[1]);
     return (1);
   }
+
   // Process each entry.
   while ((Dirent = rddir(Dir)) != NULL) {
     // Don't print inode numbers as they change

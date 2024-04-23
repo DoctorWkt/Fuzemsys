@@ -117,7 +117,7 @@ static uint16_t load_executable(char *filename) {
       loadaddr = (E.a_base << 8) + E.a_entry;
 
       /* Determine the first address after the BSS */
-      bssend = S.st_size + loadaddr + 0x80;
+      bssend = (E.a_endhi << 8) + E.a_endlo + 1;
       set_initial_brk(bssend);
 // printf("Set initial brk to 0x%x\n", bssend);
 
