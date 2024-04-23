@@ -22,8 +22,10 @@ int atoi(const char *str)
 	} else if (*str == '+')
 		str++;
 	while(isdigit(*str)) {
-		sum *= 10;
-		sum += *str++ - '0';
+		sum = sum * 10;
+		// sum += *str++ - '0';
+		sum = sum + (*str - '0');
+		str++;
 	}
 	return neg ? -sum : sum;
 }

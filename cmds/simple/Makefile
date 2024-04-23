@@ -19,6 +19,7 @@ rm: CRT= $(NOSTDIOCRT0) cprintf.o
 basename: CRT= $(CRT0)
 ls: CRT= $(CRT0)
 prdir: CRT= $(CRT0)
+cal: CRT= $(CRT0)
 
 all: cprintf.o $(BINS)
 

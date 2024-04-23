@@ -9,6 +9,7 @@ TESTS =  test001 test002 test003 test004 test005 test006 test007 test008
 TESTS += test009 test010 test011 test012 test013 test014 test015 test016
 TESTS += test017 test018 test019 test020 test021 test022 test023 test024
 TESTS += test025 test026 test027 test028 test029 test030 test031 test032
+TESTS += test033
 
 # Some tests use the crt0 which doesn't bring in the stdio library
 test001: CRT= $(NOSTDIOCRT0)
@@ -37,6 +38,7 @@ test024: CRT= $(NOSTDIOCRT0) cprintf.o
 test025: CRT= $(NOSTDIOCRT0) cprintf.o
 test027: CRT= $(NOSTDIOCRT0) cprintf.o
 test030: CRT= $(NOSTDIOCRT0) cprintf.o
+test033: CRT= $(NOSTDIOCRT0) cprintf.o
 #getime: CRT= $(NOSTDIOCRT0) cprintf.o
 
 # Some tests use stdio
