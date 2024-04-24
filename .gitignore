@@ -4,3 +4,5 @@
 *.a
 RCS
 TODO
+libs/DoAsmFiles
+tests/NOTES.md
