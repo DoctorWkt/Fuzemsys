@@ -5,13 +5,19 @@
 dodiff=0;
 
 if [ "$#" -ge 1 ]
-then if [ "$1" == "-d" ]
-     then dodiff=1;
+then if [ "$1" = "-d" ]
+     then dodiff=1; shift;
      fi
 fi
 
+if [ "$#" -ne 1 ]
+then echo "Usage: $0 CPU, e.g. $0 6809 or $0 z80"; exit 1
+fi
+
+cpu=$1
+
 # Make all the tests
-make > /dev/null 2> /dev/null
+make -f Makefile.$cpu > /dev/null 2> /dev/null
 
 # Try to use each input source file
 for i in test*.c
@@ -21,7 +27,7 @@ do
   echo -n $i
 
   # Run the test with some arguments, capture the output
-  emu6809 $b -l -foo file1 file2 > testout 2> /dev/null
+  emu$cpu $b -l -foo file1 file2 > testout 2> /dev/null
 
   if [ ! -f "out/$b" ]
   then echo " has no output file to compare against"
@@ -50,4 +56,4 @@ do
 done
 
 # Clean up
-make clean > /dev/null 2> /dev/null
+make -f Makefile.$cpu clean > /dev/null 2> /dev/null

@@ -39,7 +39,7 @@ emu6809: emu6809.o e6809.o d6809.o syscalls6809.o mapfile.o emumon6809.o
 		syscalls6809.o mapfile.o emumon6809.o \
 		$(LIBS)
 
-emuz80: emuz80.o z80dis.o syscalls6809.o mapfile.o libz80/libz80.o
+emuz80: emuz80.o z80dis.o syscallsz80.o mapfile.o libz80/libz80.o
 	$(CC) $(CFLAGS) -o emuz80 emuz80.o z80dis.o \
 		syscallsz80.o mapfile.o \
 		libz80/libz80.o
@@ -49,5 +49,6 @@ clean:
 	rm -f emu6809 emuz80
 	(cd libz80; make clean)
 
-install: emu6809
+install: emu6809 emuz80
 	cp emu6809 /opt/fcc/bin
+	cp emuz80 /opt/fcc/bin
