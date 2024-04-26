@@ -11,25 +11,25 @@ open(my $OUT, ">", "syscalls.s")
 my $str = <<"END";
 	.export _printint
 _printint:
-	ldd     2,s
-	std     \$FEFC
-	rts
+	ld	a,h
+	out	(0xFB),a
+	ld	a,l
+	out	(0xFC),a
+	ret
 
 	.export _printchar
 _printchar:
-	ldd     2,s
-	stb     \$FEFE
-	rts
+	out	(0xFE),a
+	ret
 
 	.export __syscall
+
 __syscall:
-	swi
-	cmpd #0		; D holds error val, X return result
-	beq noerr1
-	std _errno	; Save D into errno if an error
-noerr1:
-	tfr x,d		; Put result into D
-	rts
+	call    __text
+	ret     nc
+	ld      (_errno), hl            ; error path
+	ld      hl, #0xffff
+	ret
 
 END
 
@@ -39,8 +39,8 @@ while (<$IN>) {
   my ($num,$name)= split(/:/);
   print($OUT "\t.export $name\n");
   print($OUT "$name:\n");
-  print($OUT "\tldd #$num\n");
-  print($OUT "\tjmp __syscall\n\n");
+  print($OUT "\tld a,$num\n");
+  print($OUT "\tjp __syscall\n\n");
 }
 close($IN);
 close($OUT);
