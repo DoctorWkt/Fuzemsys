@@ -186,6 +186,75 @@ uint16_t getui(uint16_t addr) {
 }
 #endif
 
+#ifdef CPU_Z80
+#include "libz80/z80.h"
+#include "emuz80.h"
+#define EMU_LITTLEENDIAN
+
+// Emulator's memory
+extern uint8_t ram[];
+
+// Get the stack pointer value
+uint16_t get_sp(void) {
+  return(cpu_z80.R1.wr.SP);
+}
+
+// Get a pointer to a location in the emulator's memory
+// given the location's address. Return NULL is the
+// emulator's address is zero.
+uint8_t *get_memptr(uint16_t addr) {
+  if (addr==0) return(NULL);
+  return(&ram[addr]);
+}
+
+// Functions to read/write (un)signed char/int/long arguments at the
+// "off"set on the stack. Offset 0 is the 1st byte of the 1st argument.
+
+// Signed 8-bit char argument
+char scarg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  char val= mem_read(0, sp);
+  // printf("scarg %d is %d\n", off, val);
+  return(val);
+}
+
+// Unsigned 8-bit char argument
+unsigned char ucarg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  unsigned char val= mem_read(0, sp);
+  // printf("ucarg %d is %d\n", off, val);
+  return(val);
+}
+
+// Signed 16-bit integer argument
+int siarg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  int val= mem_read(0, sp) | (mem_read(0, sp+1) << 8);
+  if (val > 0x8000) val -= 0x10000;
+  // printf("siarg %d is %d\n", off, val);
+  return(val);
+}
+
+// Unsigned 16-bit integer argument
+unsigned int uiarg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  unsigned int val= mem_read(0, sp) | (mem_read(0, sp+1) << 8);
+  // printf("uiarg %d is %d\n", off, val);
+  return(val);
+}
+
+// Put 16-bit value in memory at the given location
+void putui(uint16_t addr, uint16_t val) {
+  mem_write(0, addr++, val & 0xff);
+  mem_write(0, addr, val >> 8);
+}
+
+// Get 16-bit value in memory at the given location
+uint16_t getui(uint16_t addr) {
+  return(mem_read(0, addr) | (mem_read(0, addr+1) <<8));
+}
+#endif
+
 // Determine which endian functions we will use
 #ifdef EMU_BIGENDIAN
   #define htoemu16 htobe16

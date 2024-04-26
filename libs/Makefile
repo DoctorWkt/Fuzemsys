@@ -1,13 +1,14 @@
+# 6809 Version
 CC = /opt/fcc/bin/fcc -m6809
 ASM = /opt/fcc/bin/as6809
 AR = ar
 CC_OPT = -c -O -D__m6809__
 ASM_OPT = -o
 
-SRC_CRT0 = crt0.s crt0nostdio.s
+SRC_CRT0 = 6809/crt0.s 6809/crt0nostdio.s
 OBJ_CRT0 = $(SRC_CRT0:.s=.o)
-#SRC_ASM = setjmp_6809.s ashlsi3_6809.s
-SRC_ASM = syscalls.s
+#SRC_ASM = 6809/setjmp_6809.s 6809/ashlsi3_6809.s
+SRC_ASM = 6809/syscalls.s
 OBJ_ASM = $(SRC_ASM:.s=.o)
 SRC_C =  __argv.c abort.c accept.c aes256.c asctime.c asctime_r.c assert.c atexit.c
 SRC_C += basename.c bcmp.c bcopy.c bind.c bsearch.c bzero.c
@@ -116,8 +117,8 @@ $(OBJ_ALL): $(KRN_HEADERS_COPY)
 $(KRN_HEADERS_COPY): $(KRN_HEADERS_SRC)
 	cp ../../Kernel/include/$(notdir $@) $@
 
-syscalls.s: mksyscalls.pl syscall.list
-	perl mksyscalls.pl
+6809/syscalls.s: 6809/mksyscalls.pl 6809/syscall.list
+	(cd 6809; perl mksyscalls.pl)
 
 libc.l:%.l:$(OBJ_C) $(OBJ_ASM) $(OBJ_HARD)
 	ls $(OBJ_C) $(OBJ_ASM) $(OBJ_HARD)  > libc.l
@@ -186,11 +187,12 @@ $(OBJ_RL):%.o: %.c
 	$(CC) $(CC_OPT) $(@:.o=.c)
 
 clean:
-	rm -rf *.o *.asm *.sym *.lst *.a *~ syscall.l libc.l syslib.l \
+	rm -f *.o *.asm *.sym *.lst *.a *~ syscall.l libc.l syslib.l \
 	libc.a libm.a libtermcap.a \
 	libcurses.a libreadline.a liberror.txt
-	rm -rf syscalls.s
+	rm -f 6809/syscalls.s 6809/*.o
 	-cd curses && rm -rf *.o *.asm *.sym *.lst *~
 
 install: all
-	cp crt*.o lib*.a /opt/fcc/lib/6809
+	cp 6809/crt*.o lib*.a /opt/fcc/lib/6809
+	rm -f *.o *.a
