@@ -21,7 +21,6 @@ FILE *logfile=NULL;
 char *mapfile = NULL;
 
 Z80Context cpu_z80;
-static unsigned trace;
 
 // Default environment variables
 static char *default_envp[] = {
@@ -94,7 +93,8 @@ static unsigned int nbytes;
 uint8_t z80dis_byte(uint16_t addr)
 {
 	uint8_t r = mem_read(0, addr);
-	fprintf(stderr, "%02X ", r);
+	if (logfile!=NULL)
+	  fprintf(logfile, "%02X ", r);
 	nbytes++;
 	return r;
 }
@@ -109,7 +109,7 @@ static void z80_trace(unsigned unused)
 	static uint32_t lastpc = -1;
 	char buf[256];
 
-	if (!trace)
+	if (logfile==NULL)
 		return;
 	nbytes = 0;
 	/* Spot XXXR repeating instructions and squash the trace */
@@ -118,15 +118,17 @@ static void z80_trace(unsigned unused)
 		return;
 	}
 	lastpc = cpu_z80.M1PC;
-	fprintf(stderr, "%04X: ", lastpc);
-	z80_disasm(buf, lastpc);
-	while(nbytes++ < 6)
-		fprintf(stderr, "   ");
-	fprintf(stderr, "%-16s ", buf);
-	fprintf(stderr, "[ %02X:%02X %04X %04X %04X %04X %04X %04X ]\n",
+	if (logfile!=NULL) {
+	  fprintf(logfile, "%04X: ", lastpc);
+	  z80_disasm(buf, lastpc);
+	  while(nbytes++ < 6)
+		fprintf(logfile, "   ");
+	  fprintf(logfile, "%-16s ", buf);
+	  fprintf(logfile, "[ %02X:%02X %04X %04X %04X %04X %04X %04X ]\n",
 		cpu_z80.R1.br.A, cpu_z80.R1.br.F,
 		cpu_z80.R1.wr.BC, cpu_z80.R1.wr.DE, cpu_z80.R1.wr.HL,
 		cpu_z80.R1.wr.IX, cpu_z80.R1.wr.IY, cpu_z80.R1.wr.SP);
+	}
 }
 
 /* FUZIX executable header */
@@ -158,7 +160,8 @@ static uint16_t load_executable(char *filename) {
   cnt = read(fd, &E, sizeof(E));
   if (cnt == sizeof(E)) {
     /* Check the magic number and CPU */
-    if ((be16toh(E.a_magic) == EXEC_MAGIC) && (E.a_cpu == A_6809)) {
+    if ((le16toh(E.a_magic) == EXEC_MAGIC) && (E.a_cpu == A_8080)
+	&& (E.a_cpufeat == AF_8080_Z80)) {
 
       /* Determine the load address. */
       /* N.B. Add on the entry size so we */
@@ -166,7 +169,8 @@ static uint16_t load_executable(char *filename) {
       loadaddr = (E.a_base << 8) + E.a_entry;
 
       /* Determine the first address after the BSS */
-      bssend = (E.a_endhi << 8) + E.a_endlo + 1;
+      /* XXX Little-endian so lo/hi swapped. Should fix this somehow */
+      bssend = (E.a_endlo << 8) + E.a_endhi + 1;
       set_initial_brk(bssend);
 // printf("Set initial brk to 0x%x\n", bssend);
 
@@ -179,7 +183,7 @@ static uint16_t load_executable(char *filename) {
 
   /* It's not a FUZIX binary, so read it in as a raw file at addr 0 */
   if (read(fd, ram, 0xFC00) < 10) {
-    fprintf(stderr, "emu6809: executable not FUZIX, too small.\n");
+    fprintf(stderr, "emuz80: executable not FUZIX, too small.\n");
     perror(filename);
     exit(1);
   }
@@ -275,7 +279,7 @@ int main(int argc, char *argv[])
 
   // Put the args and envp on the stack.
   // Start the stack below the emulator special locations.
-  sp= set_arg_env(0xFDFF, &argv[optind], default_envp);
+  sp= set_arg_env(0xFFFF, &argv[optind], default_envp);
 
   // If we have a FUZIXROOT environment variable,
   // use that as the executable's root directory.
@@ -285,8 +289,10 @@ int main(int argc, char *argv[])
   else
     set_fuzix_root("");
 
-  // Reset the CPU state
+  // Reset the CPU state. Set the stack pointer at the arguments.
   Z80RESET(&cpu_z80);
+  cpu_z80.PC= pc;
+  cpu_z80.R1.wr.SP= sp;
   cpu_z80.ioRead = io_read;
   cpu_z80.ioWrite = io_write;
   cpu_z80.memRead = mem_read;
