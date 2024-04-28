@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include <errno.h>
 #include "z80.h"
 #include "string.h"
 #include "../syscalls.h"

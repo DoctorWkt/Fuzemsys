@@ -539,7 +539,7 @@ int do_syscall(int op, int *longresult) {
 
   switch(op) {
     case 0:		// _exit
-	_exit(siarg(0));
+	exit(siarg(0));
     case 1:		// open
 	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
 	if (path==NULL) { result=-1; errno=EFAULT; break; }

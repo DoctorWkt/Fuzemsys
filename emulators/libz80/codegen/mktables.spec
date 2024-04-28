@@ -136,7 +136,8 @@ DJNZ \(PC\+e\)
 RST (0|8|10|18|20|28|30|38)H
 	int longresult;
 	ctx->tstates += 1;
-	do_syscall(BR.A, &longresult);
+	WR.HL = do_syscall(BR.A, &longresult);
+	WR.DE = errno;
 	
 	
 #
