@@ -1250,6 +1250,7 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 	  d6809_disassemble(buf, reg_pc);
 
 	  // See if we have a symbol at this address
+	  sym=NULL;
   	  if (mapfile_loaded)
     	    sym= get_symbol_and_offset(reg_pc, &offset);
 

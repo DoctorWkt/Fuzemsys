@@ -107,6 +107,8 @@ uint8_t z80dis_byte_quiet(uint16_t addr)
 static void z80_trace(unsigned unused)
 {
 	static uint32_t lastpc = -1;
+	int offset;
+	char *sym;
 	char buf[256];
 
 	if (logfile==NULL)
@@ -119,7 +121,14 @@ static void z80_trace(unsigned unused)
 	}
 	lastpc = cpu_z80.M1PC;
 	if (logfile!=NULL) {
-	  fprintf(logfile, "%04X: ", lastpc);
+	  // See if we have a symbol at this address
+	  sym=NULL;
+          if (mapfile_loaded)
+            sym= get_symbol_and_offset(lastpc, &offset);
+	  if (sym!=NULL)
+	    fprintf(logfile, "%12s+%04X: ", sym, offset);
+	  else
+	    fprintf(logfile, "%04X: ", lastpc);
 	  z80_disasm(buf, lastpc);
 	  while(nbytes++ < 6)
 		fprintf(logfile, "   ");
