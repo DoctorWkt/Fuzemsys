@@ -18,11 +18,12 @@ int main() {
   if (pid==0) {
     cprintf("child after the fork\n");
     // Loop to delay the process
-    for (i=0; i < 256; i++)
+    for (i=0; i < 256; i++) {
       for (j=0; j < 16; j++) {
 	k= i * j; cprintf("%d ", k);
       }
-    cprintf("\n");
+      cprintf("\n");
+    }
     exit(0);
   }
   else if (pid==-1)

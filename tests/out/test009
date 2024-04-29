@@ -3,5 +3,5 @@ close err -1, errno 9
 chdir err -1, errno 2
 mkdir err -1, errno 17
 rmdir err -1, errno 16
-lseek err 0, errno 16
+lseek err $00, errno 0
 setuid err -1, errno 1

@@ -45,9 +45,17 @@
 #define FO_TIOCGWINSZ	10
 #define FO_TIOCGPGRP	12
 
-// The stat structure used by FUZIX
+// The stat structure used by FUZIX.
+// NOTE I've rearranged fields with
+// the largest first as there were
+// alignment problems on amd64 Linux.
 struct _uzistat
 {
+        uint32_t st_size;
+        uint32_t st__atime;
+        uint32_t st__mtime;
+        uint32_t st__ctime;
+        uint32_t st_timeh;      /* Time high bytes */
         int16_t  st_dev;
         uint16_t st_ino;
         uint16_t st_mode;
@@ -55,11 +63,6 @@ struct _uzistat
         uint16_t st_uid;
         uint16_t st_gid;
         uint16_t st_rdev;
-        uint32_t st_size;
-        uint32_t st__atime;
-        uint32_t st__mtime;
-        uint32_t st__ctime;
-        uint32_t st_timeh;      /* Time high bytes */
 };
 
 // FUZIX dirent structure
@@ -452,10 +455,10 @@ static void copystat(struct stat *src, struct _uzistat *dst) {
         dst->st_uid= htoemu16(src->st_uid & 0xffff);
         dst->st_gid= htoemu16(src->st_gid & 0xffff);
         dst->st_rdev= htoemu16(src->st_rdev & 0xffff);
-        dst->st_size= htoemu16(src->st_size & 0xffff);
-        dst->st__atime= htoemu16(src->st_atime & 0xffff);
-        dst->st__mtime= htoemu16(src->st_mtime & 0xffff);
-        dst->st__ctime= htoemu16(src->st_ctime & 0xffff);
+        dst->st_size= htoemu32(src->st_size & 0xffffffff);
+        dst->st__atime= htoemu32(src->st_atime & 0xffffffff);
+        dst->st__mtime= htoemu32(src->st_mtime & 0xffffffff);
+        dst->st__ctime= htoemu32(src->st_ctime & 0xffffffff);
 }
 
 // Determine if the path is a directory. If so, read the

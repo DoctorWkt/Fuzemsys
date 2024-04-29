@@ -1,6 +1,3 @@
-argc is 5 at fd94
-argv is at fd9a fd96
-envp is at fda6 fd98
 argv[0] is test010
 argv[1] is -l
 argv[2] is -foo
