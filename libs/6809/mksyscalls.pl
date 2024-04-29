@@ -23,11 +23,8 @@ _printchar:
 
 	.export __syscall
 __syscall:
-	swi
-	cmpd #0		; D holds error val, X return result
-	beq noerr1
+	swi		; After swi D holds error val, X return result
 	std _errno	; Save D into errno if an error
-noerr1:
 	tfr x,d		; Put result into D
 	rts
 
