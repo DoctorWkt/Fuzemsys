@@ -14,26 +14,27 @@ Firstly get:
 Compile Bintools and install into `/opt/fcc`, then compile the compiler kit
 and install there as well.
 
-Do a `make; make install` here to build at least the 6809 emulator and install
-this into `/opt/fcc/bin/emu6809`. This will also install the 6809 include files
-and the 6809 library.
+Do a `make; make install` here to build at the 6809 and Z80 emulators and install
+them into `/opt/fcc/bin/`. This will also install the 6809/Z80 include files
+and the 6809/Z80 libraries.
 
 ## Tests
 
-With the emulator installed, change into the `tests` directory and do a `make` to build the
-test executables. Now, for example, you can run:
+With the emulator installed, change into the `tests` directory and do a
+`make -f Makefile.6809` to build the 6809 test executables. Now, for example, you can run:
 
 ```
 $ emu6809 test001
 ```
 
-and you should see "Hello world" written to standard output.
+and you should see "Hello world" written to standard output. There is a `Makefile.z80`
+as well for the Z80 test executables.
 
 There is a `runtests` script in `tests/` that runs the executables using
-the 6809 emulator and checks that they behave as expected. Example:
+a specific emulator and checks that they behave as expected. Example:
 
 ```
-$ ./runtests
+$ ./runtests 6809    (or ./runtests z80)
 test001.c: OK
 test002.c: OK
 test003.c: OK
@@ -44,12 +45,12 @@ test032.c: OK
 ## Commands
 
 There are some commands in the `cmds/` directory which will run under the
-emulator.
+emulator. Use the appropriate `Makefile` for the CPU that you wish.
 
 ## Emulator Usage
 
-The `emu6809` emulator now has support for map files and a built-in monitor.
-Here is the emulator's usage details:
+The `emu6809` and `emuz80` emulators now have support for map files and a built-in monitor.
+Here are the usage details for `emu6809` (the same as `emuz80`):
 
 ```
 Usage: emu6809 [-M] [-d logfile] [-m mapfile] [-b addr] executable <arguments>
@@ -85,5 +86,5 @@ Addresses and Values
 Decimal literals start with [0-9], e.g. 23
 Hexadecimal literals start with $, e.g. $1234
 Symbols start with _ or [A-Za-z], e.g. _printf
-Synbols + offset, e.g. _printf+23, _printf+$100
+Symbols + offset, e.g. _printf+23, _printf+$100
 ```
