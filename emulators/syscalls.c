@@ -898,6 +898,14 @@ int do_syscall(int op, int *longresult) {
     case 61:		// getpgrp
 	result= getpgrp();
 	break;
+    case 67:		// sleep
+	// FUZIX uses alarm() but we can't
+	// support it as it requires proper
+	// signal handling. So, we have an
+	// extra syscall.
+	duration= uiarg(0);
+	result= sleep(duration);
+	break;
     case 77:		// setpgid
 	pid= uiarg(0);
 	pgid= uiarg(2);

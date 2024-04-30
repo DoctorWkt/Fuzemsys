@@ -19,6 +19,8 @@ static unsigned int div10quicki(unsigned int i)
 	return q + (r >> 9);
 }
 
+#if 0
+// Now done as a syscall
 unsigned int sleep(unsigned int seconds)
 {
 	__ktime_t end, now;
@@ -29,6 +31,7 @@ unsigned int sleep(unsigned int seconds)
 	_time(&now, 1);
 	return div10quicki(end.low - now.low);
 }
+#endif
 
 unsigned int alarm(unsigned int secs)
 {

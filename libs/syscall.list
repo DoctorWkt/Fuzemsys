@@ -65,7 +65,7 @@
 64:_memalloc
 65:_memfree
 66:___netcall
-67:__nosys67
+67:_sleep
 68:__nosys68
 69:__nosys69
 70:__nosys70
