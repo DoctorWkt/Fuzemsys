@@ -116,7 +116,8 @@ void listmany(char *entry)
       }
 
       // and add the file to the array
-      namelist[count].dent= dent;
+      namelist[count].dent= (struct dirent *)malloc(sizeof(struct dirent));
+      memcpy(namelist[count].dent, dent, sizeof(struct dirent));
       memcpy(&(namelist[count].sb), &sb, sizeof(sb));
       count++;
 
