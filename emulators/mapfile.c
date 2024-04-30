@@ -17,7 +17,7 @@ static struct mapentry *maparray = NULL;
 
 // Index of the most recently used mapentry
 // and the count of valid mapentries
-static int cidx = 0;
+static int mapidx = 0;
 static int mapcnt = 0;
 
 // Compare mapentries by address, for qsort()
@@ -43,7 +43,7 @@ void read_mapfile(char *filename) {
     for (i = 0; i < mapcnt; i++)
       free(maparray[i].sym);
     free(maparray);
-    cidx=mapcnt=0;
+    mapidx=mapcnt=0;
   }
 
   // To start with, open the file, read in
@@ -145,18 +145,18 @@ char *get_symbol_and_offset(unsigned int addr, int *offset) {
   // Error check
   if (offset == NULL) return (NULL);
 
-  // cidx points at the last symbol used. If the address
+  // mapidx points at the last symbol used. If the address
   // is at/between this symbol and the next one, use it
-  if (maparray[cidx].addr <= addr) {
-    *offset = addr - maparray[cidx].addr;
-    return (maparray[cidx].sym);
+  if ((maparray[mapidx].addr <= addr) && (maparray[mapidx+1].addr > addr)) {
+    *offset = addr - maparray[mapidx].addr;
+    return (maparray[mapidx].sym);
   }
 
   // No luck. Search the whole list to find a suitable symbol
-  for (cidx = 0; cidx < mapcnt; cidx++) {
-    if (maparray[cidx].addr <= addr) {
-      *offset = addr - maparray[cidx].addr;
-      return (maparray[cidx].sym);
+  for (mapidx = 0; mapidx < mapcnt; mapidx++) {
+    if ((maparray[mapidx].addr <= addr) && (maparray[mapidx+1].addr > addr)) {
+      *offset = addr - maparray[mapidx].addr;
+      return (maparray[mapidx].sym);
     }
   }
 

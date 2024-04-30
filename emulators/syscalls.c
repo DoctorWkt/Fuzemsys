@@ -20,6 +20,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #define MAX_ARGS	200	// Max cmd-line args per process
 
@@ -90,6 +91,11 @@ struct fowinsize {
     uint16_t ws_col;
     uint16_t ws_xpixel;
     uint16_t ws_ypixel;
+};
+
+// Recognised FUZIX signal handlers
+static __sighandler_t sighandlist[] = {
+  SIG_DFL, SIG_IGN
 };
 
 // PORTING TO ANOTHER EMULATOR
@@ -536,6 +542,8 @@ int do_syscall(int op, int *longresult) {
   struct fotermios *ftios;	// Pointer to FUZIX termios struct
   struct winsize w;	// Host window size
   struct fowinsize *fw;	// FUZIX window size
+  uint16_t signum;	// Signal number
+  uint16_t sighandler;	// Signal handler
 
   *longresult=0;	// Assume a 16-bit result
   errno= 0;		// Start with no syscall errors
@@ -801,6 +809,15 @@ int do_syscall(int op, int *longresult) {
     case 32:		// _fork
 	result= fork();
 	break;
+    case 35:		// signal, only IGN and DFL
+	signum= uiarg(0);
+	sighandler= uiarg(2);
+	if (sighandler>1) {
+	  errno= EINVAL; result= -1; break;
+	}
+	signal(signum, sighandlist[signum]);
+	result= 0;
+	break;  
     case 36:		// dup2
 	fd= uiarg(0);
 	newfd= uiarg(2);
