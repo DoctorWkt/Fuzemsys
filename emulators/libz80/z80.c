@@ -28,6 +28,7 @@
 #include "z80.h"
 #include "string.h"
 #include "../syscalls.h"
+#include "../emumon.h"
 
 
 #define BR (ctx->R1.br)
@@ -39,6 +40,8 @@
 
 #define VALFLAG(F,V) valFlag(ctx, F, V)
 
+/* If 1, we hit a write breakpoint */
+static unsigned write_brkpt= 0;
 
 /* ---------------------------------------------------------
  *  Flag tricks
@@ -137,6 +140,10 @@ static void write8 (Z80Context* ctx, ushort addr, byte val)
 {
 	ctx->tstates += 3;
 	ctx->memWrite(ctx->memParam, addr, val);	
+	if (is_breakpoint(addr, BRK_WRITE)) {
+          write_brkpt= 1;
+          printf("Write at $%04X\n", addr);
+        }
 }
 
 
@@ -769,6 +776,19 @@ static void do_int(Z80Context* ctx)
 
 void Z80Execute (Z80Context* ctx)
 {
+	int addr;
+
+	/* If the PC is a breakpoint, or we hit a write
+           breakpoint, fall into the monitor */
+        if (write_brkpt==1 || is_breakpoint(ctx->PC, BRK_INST)) {
+          write_brkpt=0;
+          addr= monitor(ctx->PC);
+
+          /* If we have a new PC from the monitor, set it */
+          if (addr != -1)
+            ctx->PC= addr & 0xffff;
+        }
+
 	if (ctx->nmi_req)
 		do_nmi(ctx);
 	else if (ctx->int_req && !ctx->defer_int && ctx->IFF1)

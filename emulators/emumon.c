@@ -102,6 +102,33 @@ static void write_mem(int addr, int val) {
 }
 #endif
 
+#ifdef CPU_Z80
+#include "libz80/z80.h"
+#include "emuz80.h"
+#include "z80dis.h"
+
+static uint8_t getub(int addr) {
+  return mem_read(0, addr & 0xffff);
+}
+
+static int disassemble_instruction(char *buf, int addr) {
+  return(z80_disasm(buf, addr));
+}
+
+static void get_cpu_state(char *buf) {
+  z80_state_tobuf(buf);
+}
+
+static int run_instruction(void) {
+  Z80Execute(&cpu_z80);
+  return(cpu_z80.PC);
+}
+
+static void write_mem(int addr, int val) {
+  mem_write(0, addr & 0xffff, val & 0xff);
+}
+#endif
+
 // List of commands
 enum cmd_numbers {
   CMD_BRK,

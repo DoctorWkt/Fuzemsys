@@ -34,15 +34,18 @@ mapfile.o: mapfile.c
 emumon6809.o: emumon.c
 	$(CC) $(CFLAGS) -DCPU_6809 -c -o emumon6809.o emumon.c
 
+emumonz80.o: emumon.c
+	$(CC) $(CFLAGS) -DCPU_Z80 -c -o emumonz80.o emumon.c
+
 emu6809: emu6809.o e6809.o d6809.o syscalls6809.o mapfile.o emumon6809.o
 	$(CC) $(CFLAGS) -o emu6809 emu6809.o e6809.o d6809.o \
 		syscalls6809.o mapfile.o emumon6809.o \
 		$(LIBS)
 
-emuz80: emuz80.o z80dis.o syscallsz80.o mapfile.o libz80/libz80.o
+emuz80: emuz80.o z80dis.o syscallsz80.o mapfile.o emumonz80.o libz80/libz80.o
 	$(CC) $(CFLAGS) -o emuz80 emuz80.o z80dis.o \
-		syscallsz80.o mapfile.o \
-		libz80/libz80.o
+		syscallsz80.o mapfile.o emumonz80.o \
+		libz80/libz80.o $(LIBS)
 
 clean:
 	rm -f *.o *.map

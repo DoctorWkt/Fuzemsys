@@ -1,7 +1,7 @@
 #ifndef EMUMON_H
 # define EMUMON_H
 
-// Breakpoint types
+/* Breakpoint types */
 enum brkpt_nums
 {
   BRK_EMPTY,

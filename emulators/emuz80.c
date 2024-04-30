@@ -14,6 +14,7 @@
 #include "exec.h"
 #include "syscalls.h"
 #include "mapfile.h"
+#include "emumon.h"
 
 // Now visible globally for syscalls.c
 uint8_t ram[65536];
@@ -104,6 +105,14 @@ uint8_t z80dis_byte_quiet(uint16_t addr)
 	return mem_read(0, addr);
 }
 
+// Put the Z80 state into a buffer of size 80
+void z80_state_tobuf(char *buf) {
+  snprintf(buf, 80, "[ %02X:%02X %04X %04X %04X %04X %04X %04X ]",
+	cpu_z80.R1.br.A, cpu_z80.R1.br.F,
+	cpu_z80.R1.wr.BC, cpu_z80.R1.wr.DE, cpu_z80.R1.wr.HL,
+	cpu_z80.R1.wr.IX, cpu_z80.R1.wr.IY, cpu_z80.R1.wr.SP);
+}
+
 static void z80_trace(unsigned unused)
 {
 	static uint32_t lastpc = -1;
@@ -133,10 +142,8 @@ static void z80_trace(unsigned unused)
 	  while(nbytes++ < 6)
 		fprintf(logfile, "   ");
 	  fprintf(logfile, "%-16s ", buf);
-	  fprintf(logfile, "[ %02X:%02X %04X %04X %04X %04X %04X %04X ]\n",
-		cpu_z80.R1.br.A, cpu_z80.R1.br.F,
-		cpu_z80.R1.wr.BC, cpu_z80.R1.wr.DE, cpu_z80.R1.wr.HL,
-		cpu_z80.R1.wr.IX, cpu_z80.R1.wr.IY, cpu_z80.R1.wr.SP);
+	  z80_state_tobuf(buf);
+	  fprintf(logfile, "%s\n", buf);
 	}
 }
 
@@ -216,9 +223,11 @@ void usage(char *name) {
 int main(int argc, char *argv[])
 {
   int fd, pc, sp, opt;
+  int start_in_monitor=0;
   char *fuzixroot;
   char **brkstr;                // Array of breakpoint strings
-  int brkcnt=0;
+  int i, brkcnt=0;
+  int breakpoint;
 
   if (argc<2) usage(argv[0]);
 
@@ -242,9 +251,9 @@ int main(int argc, char *argv[])
       mapfile = optarg;
       read_mapfile(mapfile);
       break;
-    // case 'M':
-      // start_in_monitor=1;
-      // break;
+    case 'M':
+      start_in_monitor=1;
+      break;
     case 'b':
       // Cache the pointer for now
       brkstr[brkcnt++]= optarg;
@@ -280,11 +289,11 @@ int main(int argc, char *argv[])
 
   // Now that we might have a map file,
   // parse any breakpoint strings and set them
-  // for (i=0; i<brkcnt; i++) {
-    // breakpoint= parse_addr(brkstr[i], NULL);
-    // if (breakpoint != -1)
-      // set_breakpoint(breakpoint, BRK_INST);
-  // }
+  for (i=0; i<brkcnt; i++) {
+    breakpoint= parse_addr(brkstr[i], NULL);
+    if (breakpoint != -1)
+      set_breakpoint(breakpoint, BRK_INST);
+  }
 
   // Put the args and envp on the stack.
   // Start the stack below the emulator special locations.
@@ -307,6 +316,14 @@ int main(int argc, char *argv[])
   cpu_z80.memRead = mem_read;
   cpu_z80.memWrite = mem_write;
   cpu_z80.trace = z80_trace;
+
+  // Start in the monitor if needed
+  if (start_in_monitor) {
+    pc= monitor(pc);
+    // Change the start address if the monitor says so
+    if (pc!=-1)
+      cpu_z80.PC= pc;
+  }
 
   while(1)
     Z80ExecuteTStates(&cpu_z80, 1000);

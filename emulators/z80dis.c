@@ -158,7 +158,7 @@ static const char *rpairstack(uint8_t r)
 /*
  *	Disassemble an instruction
  */
-void z80_disasm(char *buf, uint16_t addr)
+uint16_t z80_disasm(char *buf, uint16_t addr)
 {
     uint8_t opcode, y, z, p, q;
     const char *tp;
@@ -196,10 +196,10 @@ restart:
         z = opcode & 7;
         if (opcode < 0x40) {
             sprintf(buf, "%s %s", rotshift[y], reg8_offs(z, offs));
-            return;
+            return(pc);
         }
         sprintf(buf, "%s %d, %s", bitop[opcode >> 6], y, reg8_offs(z, offs));
-        return;
+        return(pc);
     }
     case 0xED:
         /* ED is fairly empty */
@@ -214,7 +214,7 @@ restart:
         case 0:
         case 0xC0:
             sprintf(buf, "NONI NOP");
-            return;
+            return(pc);
         case 0x40:	/* Mixed */
             switch(z) {
             case 0:
@@ -222,55 +222,55 @@ restart:
                     strcpy(buf, "IN (C)");
                 else
                     sprintf(buf, "IN %s, (C)", reg8(y));
-                return;
+                return(pc);
             case 1:
                 if (y == 6)
                     strcpy(buf, "OUT (C),255/0");
                 else
                     sprintf(buf, "OUT (C), %s", reg8(y));
-                return;
+                return(pc);
             case 2:
                 sprintf(buf, "%sC HL, %s", q?"AD":"SB", rpair(p));
-                return;
+                return(pc);
             case 3:
                 if (q == 0)
                     sprintf(buf, "LD (0x%04X), %s", imm16(), rpair(p));
                 else
                     sprintf(buf, "LD %s, (0x%04X)", rpair(p), imm16());
-                return;
+                return(pc);
             case 4:
                 strcpy(buf, "NEG");
-                return;
+                return(pc);
             case 5:
                 if (y == 1)
                     strcpy(buf, "RETI");
                 else
                     strcpy(buf, "RETN");
-                return;
+                return(pc);
             case 6:
                 /* The ilegal IM 0/1 we don't care about */
                 y &= 3;
                 if (y)
                     y--;
                 sprintf(buf, "IM %d", y);
-                return;
+                return(pc);
             case 7:
                 strcpy(buf, opgrouped17[y]);
-                return;
+                return(pc);
             }
-            return;
+            return(pc);
         case 0x80:	/* Block ops */
             if (z < 4) {
                 sprintf(buf, "%s%c%s",
                     opgrouped2[z], "ID"[y & 1], y & 2 ? "R": "");
             } else
                 strcpy(buf, "NONI NOP");
-            return;                
+            return(pc);                
         }
         break;
     case 0x76:
         sprintf(buf, "HALT");
-        return;
+        return(pc);
     }
     switch(opcode & 0xC0) {
     case 0x00:
@@ -280,13 +280,13 @@ restart:
                 sprintf(buf, opgroup00[y], relbase + offs8());
             else
                 strcpy(buf, opgroup00[y]);
-            return;
+            return(pc);
         case 0x01:
             if (q == 0)
                 sprintf(buf, "LD %s,0x%04X", rpair(p), imm16());
             else
                 sprintf(buf, "ADD %s,%s", hlname, rpair(p));
-            return;
+            return(pc);
         case 0x02:
             /* Ugly .. needs work */
             if (p > 1) {
@@ -298,50 +298,50 @@ restart:
                     sprintf(buf, opgroup02[y], imm16());
             } else
                 strcpy(buf, opgroup02[y]);
-            return;
+            return(pc);
         case 0x03:
             if (q == 0)
                 sprintf(buf, "INC %s", rpair(p));
             else
                 sprintf(buf, "DEC %s", rpair(p));
-            return;
+            return(pc);
         case 0x04:
             sprintf(buf, "INC %s", reg8(y));
-            return;
+            return(pc);
         case 0x05:
             sprintf(buf, "DEC %s", reg8(y));
-            return;
+            return(pc);
         case 0x06:
             /* Force evaluation order so we get
                 LD (IX+d),n correct */
             tp = reg8(y);
             sprintf(buf, "LD %s,0x%02X", tp, imm8());
-            return;
+            return(pc);
         case 0x07:
             strcpy(buf, opgroup07[y]);
-            return;
+            return(pc);
         }
         break;
     case 0x40:
         sprintf(buf, "LD %s,%s", reg8pair(y,z), reg8pair(z,y));
-        return;
+        return(pc);
     case 0x80:
         sprintf(buf, "%s A,%s", logic8[y], reg8(z));
-        return;
+        return(pc);
     case 0xC0:
         switch(z) {
         case 0x00:
             sprintf(buf, "RET %s", ccode[y]);
-            return;
+            return(pc);
         case 0x01:
             if (q == 0)
                 sprintf(buf, "POP %s", rpairstack(p));
             else
                 sprintf(buf, opgroup31[p], hlname);
-            return;
+            return(pc);
         case 0x02:
             sprintf(buf, "JP %s,0x%04X", ccode[y], imm16());
-            return;
+            return(pc);
         case 0x03:	/* This one is a right mix .. */
             if (y == 0)
                 sprintf(buf, "JP 0x%04X", imm16());
@@ -349,23 +349,24 @@ restart:
                 sprintf(buf, opgroup33[y], imm8());
             else
                 sprintf(buf, opgroup33[y], hlname);
-            return;
+            return(pc);
         case 0x04:
             sprintf(buf, "CALL %s,%04X", ccode[y], imm16());
-            return;
+            return(pc);
         case 0x05:
             if (q == 0)
                 sprintf(buf, "PUSH %s", rpairstack(p));
             else	/* Other 3 forms are prefixes grabbed earlier */
                 sprintf(buf, "CALL 0x%04X", imm16());
-            return;
+            return(pc);
         case 0x06:
             sprintf(buf, "%s A,0x%02X", logic8[y], imm8());
-            return;
+            return(pc);
         case 0x07:
             sprintf(buf, "RST %02X", y);
-            return;
+            return(pc);
         }
         break;
     }
+    return(pc);
 }
