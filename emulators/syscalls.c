@@ -35,7 +35,7 @@
 #define FO_NOCTTY        2048
 #define FO_CLOEXEC       4096
 
-#define FO_TCGETS	1
+#define FO_TCGETS	1		// FUZIX ioctls
 #define FO_TCSETS	2
 #define FO_TCSETSW	3
 #define FO_TCSETSF	4
@@ -86,6 +86,29 @@ struct fotermios {
   focc_t c_cc[FONCCS];
 };
 
+// These are the supported termios characters/flags
+
+#define FO_VMIN		0
+#define FO_VTIME	1
+#define FO_VEOF		0
+#define FO_VERASE	2
+#define FO_VINTR	3
+#define FO_VKILL	4
+#define FO_VQUIT	5
+#define FO_VSTART	6
+#define FO_VSTOP	7
+#define FO_VDISCARD	11
+#define FO_ICRNL	0x0002
+#define FO_INLCR	0x0020
+#define FO_ISTRIP	0x0080
+#define FO_OPOST	0x0001
+#define FO_ONLCR	0x0004
+#define FO_ECHO		0x0001
+#define FO_ECHOE	0x0002
+#define FO_ECHOK	0x0004
+#define FO_ICANON	0x0010
+#define FO_ISIG		0x0040
+
 struct fowinsize {
     uint16_t ws_row;
     uint16_t ws_col;
@@ -97,6 +120,21 @@ struct fowinsize {
 static __sighandler_t sighandlist[] = {
   SIG_DFL, SIG_IGN
 };
+
+#ifdef DEBUG
+// Print out a termios struct
+void print_termios(char *msg, struct termios *t) {
+  int i;
+
+  printf("%s\n", msg);
+  printf("Linux termios struct: iflag 0x%x oflag 0x%x cflag 0x%x lflag 0x%x\n",
+    t->c_iflag, t->c_oflag, t->c_cflag, t->c_lflag);
+
+  for (i=0; i<NCCS; i++)
+    printf("%x ", t->c_cc[i]);
+  printf("\n");
+}
+#endif
 
 // PORTING TO ANOTHER EMULATOR
 //
@@ -467,6 +505,80 @@ static void copystat(struct stat *src, struct _uzistat *dst) {
         dst->st__ctime= htoemu32(src->st_ctime & 0xffffffff);
 }
 
+// Transform between FUZIX and host termios structs
+static void to_fuzix_termios(struct fotermios *f, struct termios *t) {
+  fotcflag_t iflag, oflag, lflag;
+
+  // Map the characters
+  f->c_cc[FO_VMIN]= t->c_cc[VMIN];
+  f->c_cc[FO_VTIME]= t->c_cc[VTIME];
+  f->c_cc[FO_VEOF]= t->c_cc[VEOF];
+  f->c_cc[FO_VERASE]= t->c_cc[VERASE];
+  f->c_cc[FO_VINTR]= t->c_cc[VINTR];
+  f->c_cc[FO_VKILL]= t->c_cc[VKILL];
+  f->c_cc[FO_VQUIT]= t->c_cc[VQUIT];
+  f->c_cc[FO_VSTART]= t->c_cc[VSTART];
+  f->c_cc[FO_VSTOP]= t->c_cc[VSTOP];
+  f->c_cc[FO_VDISCARD]= t->c_cc[VDISCARD];
+
+#define maptoflag(hostflag, hostval, fuzflag, fuzval) \
+  if (hostflag & hostval) fuzflag |= fuzval; else fuzflag &= ~fuzval;
+
+  // Map the flags
+  iflag= oflag= lflag=0;
+  maptoflag(t->c_iflag, ICRNL, iflag, FO_ICRNL)
+  maptoflag(t->c_iflag, INLCR, iflag, FO_INLCR)
+  maptoflag(t->c_iflag, ISTRIP, iflag, FO_ISTRIP)
+  maptoflag(t->c_oflag, OPOST, oflag, FO_OPOST)
+  maptoflag(t->c_oflag, ONLCR, oflag, FO_ONLCR)
+  maptoflag(t->c_lflag, ECHO, lflag, FO_ECHO)
+  maptoflag(t->c_lflag, ECHOE, lflag, FO_ECHOE)
+  maptoflag(t->c_lflag, ECHOK, lflag, FO_ECHOK)
+  maptoflag(t->c_lflag, ICANON, lflag, FO_ICANON)
+  maptoflag(t->c_lflag, ISIG, lflag, FO_ISIG)
+
+  // Set the flags in CPU endian
+  f->c_iflag= htoemu16(iflag);
+  f->c_oflag= htoemu16(oflag);
+  f->c_lflag= htoemu16(lflag);
+}
+
+static void from_fuzix_termios(struct fotermios *f, struct termios *t) {
+  fotcflag_t iflag, oflag, lflag;
+
+  // Get the flags in our endian
+  iflag= emu16toh(f->c_iflag);
+  oflag= emu16toh(f->c_oflag);
+  lflag= emu16toh(f->c_lflag);
+
+  // Map the characters
+  t->c_cc[VMIN]= f->c_cc[FO_VMIN];
+  t->c_cc[VTIME]= f->c_cc[FO_VTIME];
+  t->c_cc[VEOF]= f->c_cc[FO_VEOF];
+  t->c_cc[VERASE]= f->c_cc[FO_VERASE];
+  t->c_cc[VINTR]= f->c_cc[FO_VINTR];
+  t->c_cc[VKILL]= f->c_cc[FO_VKILL];
+  t->c_cc[VQUIT]= f->c_cc[FO_VQUIT];
+  t->c_cc[VSTART]= f->c_cc[FO_VSTART];
+  t->c_cc[VSTOP]= f->c_cc[FO_VSTOP];
+  t->c_cc[VDISCARD]= f->c_cc[FO_VDISCARD];
+
+#define mapfromflag(hostflag, hostval, fuzflag, fuzval) \
+  if (fuzflag & fuzval) hostflag |= hostval; else hostflag &= ~hostval;
+
+  // Map the flags
+  mapfromflag(t->c_iflag, ICRNL, iflag, FO_ICRNL)
+  mapfromflag(t->c_iflag, INLCR, iflag, FO_INLCR)
+  mapfromflag(t->c_iflag, ISTRIP, iflag, FO_ISTRIP)
+  mapfromflag(t->c_oflag, OPOST, oflag, FO_OPOST)
+  mapfromflag(t->c_oflag, ONLCR, oflag, FO_ONLCR)
+  mapfromflag(t->c_lflag, ECHO, lflag, FO_ECHO)
+  mapfromflag(t->c_lflag, ECHOE, lflag, FO_ECHOE)
+  mapfromflag(t->c_lflag, ECHOK, lflag, FO_ECHOK)
+  mapfromflag(t->c_lflag, ICANON, lflag, FO_ICANON)
+  mapfromflag(t->c_lflag, ISIG, lflag, FO_ISIG)
+}
+
 // Determine if the path is a directory. If so, read the
 // directory and create a temporary file which contains
 // _dirent records that match the directory. Unlink the
@@ -724,23 +836,23 @@ int do_syscall(int op, int *longresult) {
 	    if (ftios==NULL) { result=-1; errno=EFAULT; break; }
 	    result= tcgetattr(fd, &termios);
 	    if (result== -1) break;
-	    ftios->c_iflag= htoemu16(termios.c_iflag);
-	    ftios->c_oflag= htoemu16(termios.c_oflag);
-	    ftios->c_cflag= htoemu16(termios.c_cflag);
-	    ftios->c_lflag= htoemu16(termios.c_lflag);
-	    for (i=0; i< FONCCS; i++)
-	      ftios->c_cc[i]= termios.c_cc[i];
+	    to_fuzix_termios(ftios, &termios);
 	    break;
+	  case FO_TCSETSW:
+	    flags= TCSADRAIN;
+	    goto setterm;		// Yuk a goto!
+	  case FO_TCSETSF:
+	    flags= TCSAFLUSH;
+	    goto setterm;		// Yuk a goto!
 	  case FO_TCSETS:
+	    flags= TCSANOW;
+setterm:
+	    // Get the existing termios, then change it
+	    tcgetattr(fd, &termios);
 	    ftios= (struct fotermios *)get_memptr(uiarg(4));
 	    if (ftios==NULL) { result=-1; errno=EFAULT; break; }
-	    termios.c_iflag= emu16toh(ftios->c_iflag);
-	    termios.c_oflag= emu16toh(ftios->c_oflag);
-	    termios.c_cflag= emu16toh(ftios->c_cflag);
-	    termios.c_lflag= emu16toh(ftios->c_lflag);
-	    for (i=0; i< FONCCS; i++)
-	      termios.c_cc[i]= ftios->c_cc[i];
-	    result= tcgetattr(fd, &termios);
+	    from_fuzix_termios(ftios, &termios);
+	    result= tcsetattr(fd, flags, &termios);
 	    break;
 	  case FO_TIOCOSTOP:
 	    result= ioctl(fd, TCOOFF);
@@ -756,12 +868,6 @@ int do_syscall(int op, int *longresult) {
 	  case FO_TIOCFLUSH:
 	    options= uiarg(4);
 	    result= tcflush(fd, options);
-	    break;
-	  case FO_TCSETSW:
-	    result= tcdrain(fd);
-	    break;
-	  case FO_TCSETSF:
-	    result= tcflush(fd, TCOFLUSH);
 	    break;
 	  case FO_TIOCGPGRP:
 	    result= isatty(fd);
