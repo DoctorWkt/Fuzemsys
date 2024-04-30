@@ -36,12 +36,12 @@ static char *default_envp[] = {
 };
 
 unsigned char e6809_read8(unsigned addr) {
-  return ram[addr];
+  return ram[addr & 0xffff];
 }
 
 unsigned char e6809_read8_debug(unsigned addr) {
   if (addr < 0xFE00 || addr >= 0xFF00)
-    return ram[addr];
+    return ram[addr & 0xffff];
   else
     return 0xFF;
 }
@@ -76,7 +76,7 @@ void e6809_write8(unsigned addr, unsigned char val) {
     fefcval = val;		/* Save high byte for now */
     break;
   default:
-    ram[addr] = val;
+    ram[addr & 0xffff] = val;
   }
 }
 

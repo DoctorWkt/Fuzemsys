@@ -1247,7 +1247,7 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
 	// Once the instruction executes, we will
 	// print out the CPU state
 	if (logfile!=NULL) {
-	  d6809_disassemble(buf, reg_pc);
+	  d6809_disassemble(buf, reg_pc & 0xffff);
 
 	  // See if we have a symbol at this address
 	  sym=NULL;
@@ -1257,7 +1257,7 @@ unsigned e6809_sstep (unsigned irq_i, unsigned irq_f)
   	  if (sym!=NULL)
     	    fprintf(logfile, "%12s+%04X: %-16.16s | ", sym, offset, buf);
   	  else
-    	    fprintf(logfile, "%04X: %-16.16s | ", reg_pc, buf);
+    	    fprintf(logfile, "%04X: %-16.16s | ", reg_pc & 0xffff, buf);
 	}
 
 	op = pc_read8();

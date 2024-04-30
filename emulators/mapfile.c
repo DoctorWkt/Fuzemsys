@@ -107,14 +107,28 @@ int get_sym_address(char *sym) {
 // the symbol, i.e. one below the next symbol
 // or -1 if the symbol is not found
 int get_sym_end_address(char *sym) {
-  int i;
+  int i, j;
 
   if (sym==NULL || *sym=='\0') return(-1);
 
-  for (i = 0; i < mapcnt; i++) {
+  // Find the index of the symbol
+  for (i = 0; i < mapcnt; i++)
     if (!strcmp(maparray[i].sym, sym))
-      return(maparray[i+1].addr - 1);
-  }
+      break;
+
+  // Symbol not found, return error
+  if (i==mapcnt)
+    return(-1);
+
+  // Now find the next map entry
+  // with a higher address. We
+  // can go past the end with the
+  // extra element
+  for (j = i+1; j <= mapcnt; j++)
+    if (maparray[j].addr > maparray[i].addr)
+      return(maparray[j].addr - 1);
+
+  // No symbol with a higher address, error
   return(-1);
 }
 
@@ -133,14 +147,14 @@ char *get_symbol_and_offset(unsigned int addr, int *offset) {
 
   // cidx points at the last symbol used. If the address
   // is at/between this symbol and the next one, use it
-  if ((maparray[cidx].addr <= addr) && (maparray[cidx + 1].addr > addr)) {
+  if (maparray[cidx].addr <= addr) {
     *offset = addr - maparray[cidx].addr;
     return (maparray[cidx].sym);
   }
 
   // No luck. Search the whole list to find a suitable symbol
   for (cidx = 0; cidx < mapcnt; cidx++) {
-    if ((maparray[cidx].addr <= addr) && (maparray[cidx + 1].addr > addr)) {
+    if (maparray[cidx].addr <= addr) {
       *offset = addr - maparray[cidx].addr;
       return (maparray[cidx].sym);
     }
