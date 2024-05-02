@@ -13,7 +13,6 @@ void cprintf(char *fmt, ...);
 
 // #define WKT_VERSION 1
 
-#if 0
 static struct __dirent *ddnext(DIR * dir) {
 #ifdef WKT_VERSION
   int cnt;
@@ -66,7 +65,6 @@ struct dirent *rddir(DIR * dir) {
   buf->d_name[30] = 0;
   return buf;
 }
-#endif
 
 int main(int argc, char *argv[]) {
   struct dirent *Dirent;
@@ -78,7 +76,6 @@ int main(int argc, char *argv[]) {
     printf("Cannot open directory '%s'\n", argv[1]);
     return (1);
   }
-#if 0
 
   // Process each entry.
   while ((Dirent = rddir(Dir)) != NULL) {
@@ -89,6 +86,5 @@ int main(int argc, char *argv[]) {
 
   // Close directory and exit.
   closedir(Dir);
-#endif
   return (0);
 }
