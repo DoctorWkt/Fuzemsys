@@ -22,23 +22,13 @@ start2:
 		ldd	#1
 		std	@one
 
-		; start the stack just below the emulator special area
-		; lds	#$FDFF
+		; Set up _environ
+		leax 6,s
+		stx _environ
 
-		; we don't clear BSS since the kernel already did
 		jsr ___stdio_init_vars
-
-		; pass environ, argc and argv to main
-		; pointers and data stuffed above stack by execve()
-		; leax 4,s
-		; stx _environ
-		; leax 2,s
-		; stx ___argv
-		; puls x			; argc
-		; ldy #_exit		; return vector
-		; pshs y
-
 		jsr	_main
+
 		; return and exit
 		stb	$FEFF
 

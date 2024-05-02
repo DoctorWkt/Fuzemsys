@@ -18,6 +18,8 @@ __text:
 		.byte 0			; No ZP on 8080
 
 start2:
+		call __ldword6		; Copy the envp pointer
+        	ld (_environ+0), hl	; to _environ
 		call _main		; go
 		push hl
 		call _exit
