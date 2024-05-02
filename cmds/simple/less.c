@@ -41,8 +41,7 @@ char *underline = "[4m";	// Underlining on
 
 // Set the terminal back to blocking and echo
 void reset_terminal(void) {
-  int fd = open("/dev/tty", O_RDONLY);
-  tcsetattr(fd, TCSANOW, &orig_termios);
+  tcsetattr(1, TCSANOW, &orig_termios);
 }
 
 // Put the terminal into cbreak mode with no echo
@@ -51,9 +50,10 @@ void set_cbreak() {
 
   // Get the original terminal settings twice,
   // one for restoration later.
-  int fd = open("/dev/tty", O_RDONLY);
-  tcgetattr(fd, &orig_termios);
-  if (tcgetattr(fd, &t) == -1) { fprintf(stderr, "Cannot tcgetattr\n"); exit(1); }
+  tcgetattr(1, &orig_termios);
+  if (tcgetattr(1, &t) == -1) {
+    fprintf(stderr, "Cannot tcgetattr\n"); exit(1);
+  }
 
   t.c_lflag &= ~(ICANON | ECHO);
   t.c_lflag |= ISIG;
@@ -61,11 +61,12 @@ void set_cbreak() {
   t.c_cc[VMIN] = 1;		// Character-at-a-time input
   t.c_cc[VTIME] = 0;		// with blocking
 
-  if (tcsetattr(fd, TCSAFLUSH, &t) == -1) { fprintf(stderr, "Cannot tcsetattr\n"); exit(1); }
+  if (tcsetattr(1, TCSAFLUSH, &t) == -1) {
+    fprintf(stderr, "Cannot tcsetattr\n"); exit(1);
+  }
 
   // Ensure we reset the terminal when we exit
   atexit(reset_terminal);
-  close(fd);
 }
 
 // Build the list of line numbers and their offsets
