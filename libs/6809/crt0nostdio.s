@@ -35,8 +35,8 @@ start2:
 		std	@one
 
 		; Set up _environ
-		leax 6,s
-		stx _environ
+		ldd 4,s
+		std _environ
 
 		jsr	_main
 		; return and exit
