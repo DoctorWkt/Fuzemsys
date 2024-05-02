@@ -130,7 +130,7 @@ libc.l:%.l:$(OBJ_C) $(OBJ_ASM) $(OBJ_HARD)
 
 syslib.a: $(OBJ_C) $(OBJ_ASM) $(OBJ_HARD)
 	rm -f syslib.a libc.a
-	ar qc syslib.a `lorderz80 $(OBJ_C) $(OBJ_ASM) $(OBJ_HARD) | tsort`
+	$(AR) rc syslib.a `lorderz80 $(OBJ_C) $(OBJ_ASM) $(OBJ_HARD) | tsort`
 	ln -sf syslib.a libc.a
 
 fuzix/syslib.l: ../tools/syscall
@@ -151,15 +151,15 @@ curses.a: $(OBJ_CURS)
 	ln -sf curses.a libcurses.a
 
 termcap.a: $(OBJ_CT)
-	$(AR) rc termcap.a $(OBJ_CT)
+	$(AR) rc termcap.a `lorderz80 $(OBJ_CT) | tsort`
 	ln -sf termcap.a libtermcap.a
 
 m.a: $(OBJ_LM)
-	$(AR) rc m.a $(OBJ_LM)
+	$(AR) rc m.a `lorderz80 $(OBJ_LM) | tsort`
 	ln -sf m.a libm.a
 
 readline.a: $(OBJ_RL)
-	$(AR) rc readline.a $(OBJ_RL)
+	$(AR) rc readline.a `lorderz80 $(OBJ_RL) | tsort`
 	ln -sf readline.a libreadline.a
 
 $(OBJ_ASM):%.o: %.s

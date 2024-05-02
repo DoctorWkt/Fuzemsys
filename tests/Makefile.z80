@@ -41,7 +41,9 @@ test027: CRT= $(NOSTDIOCRT0) cprintf.o
 test030: CRT= $(NOSTDIOCRT0) cprintf.o
 test033: CRT= $(NOSTDIOCRT0) cprintf.o
 test034: CRT= $(NOSTDIOCRT0) cprintf.o
-#getime: CRT= $(NOSTDIOCRT0) cprintf.o
+tcaptest: CRT= $(NOSTDIOCRT0) cprintf.o
+tcaptest: LIBS= /opt/fcc/lib/z80/libtermcap.a \
+	/opt/fcc/lib/z80/libc.a /opt/fcc/lib/z80/libz80.a
 
 # Some tests use stdio and cprintf
 test022: CRT= $(CRT0) cprintf.o
