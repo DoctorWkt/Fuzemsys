@@ -13,7 +13,7 @@ int main() {
 
   cprintf("About to do kill() on myself\n");
   pid= getpid();
-  err= kill(pid, SIGKILL);
+  err= kill(pid, SIGTERM);
   if (err == -1) {
     cprintf("kill() failed\n"); return(1);
   }

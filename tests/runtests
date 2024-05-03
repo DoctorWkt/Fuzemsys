@@ -1,9 +1,30 @@
-#!/bin/sh
+#!/bin/bash
 # Run each test and compare
 # against known good output
 
+# echo "Ignore the Terminated message on test020"
+
+# Compare good output vs. this output
+compare_out() {
+  cmp -s $1 $2
+
+  # If different, announce failure
+  # and print out the difference
+  if [ "$?" -eq "1" ]
+  then echo ": failed"
+       if [ $dodiff -eq 1 ]
+       then diff -c $1 $2
+       else echo
+       fi
+
+  # No failure, so announce success
+  else echo ": OK"
+  fi
+}
+
 dodiff=0;
 
+# -d: print out the good/bad output differences
 if [ "$#" -ge 1 ]
 then if [ "$1" = "-d" ]
      then dodiff=1; shift;
@@ -19,6 +40,11 @@ cpu=$1
 # Make all the tests
 make -f Makefile.$cpu > /dev/null 2> /dev/null
 
+if [ "$?" -ne 0 ]
+then echo "make failed, run make -f Makefile.$cpu by hand"
+     exit 1
+fi
+
 # Try to use each input source file
 for i in test*.c
 do
@@ -26,33 +52,30 @@ do
   b=$(basename $i .c)
   echo -n $i
 
-  # Run the test with some arguments, capture the output
-  emu$cpu $b -l -foo file1 file2 > testout 2> /dev/null
+  # Run the test with some arguments, capture the output.
+  # Also get a sorted output file. sh -c here as bash
+  # gives a Terminated output on test020.
+  sh -c "emu$cpu $b -l -foo file1 file2 > testout 2> /dev/null"
+  sort testout > sortout
 
+  # Use the sorted output if that's our good output
+  if [ -f "out/sort_$b" ]
+  then
+    compare_out "out/sort_$b" sortout
+    continue
+  fi
+
+  # Otherwise use the unsorted output
   if [ ! -f "out/$b" ]
   then echo " has no output file to compare against"
-       rm -f testout $b
+       rm -f sortout testout $b
        continue
   fi
 
-  # Compare this agains the correct output
-  cmp -s "out/$b" testout
+  compare_out "out/$b" testout
 
-  # If different, announce failure
-  # and print out the difference
-  if [ "$?" -eq "1" ]
-  then echo ": failed"
-       if [ $dodiff -eq 1 ]
-       then diff -c "out/$b" testout
-       else echo
-       fi
-
-  # No failure, so announce success
-  else echo ": OK"
-  fi
-
-  # Remove the test and the output
-  rm -f testout $b
+  # Remove the test and the outputs
+  rm -f testout sortout $b
 done
 
 # Clean up
