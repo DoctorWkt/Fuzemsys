@@ -49,7 +49,7 @@ static unsigned reg_s;
 
 /* program counter */
 
-static unsigned reg_pc;
+static uint16_t reg_pc;
 
 /* accumulators */
 
