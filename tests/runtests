@@ -38,7 +38,7 @@ fi
 cpu=$1
 
 # Make all the tests
-make -f Makefile.$cpu > /dev/null 2> /dev/null
+make -f Makefile.$cpu clean all > /dev/null 2> /dev/null
 
 if [ "$?" -ne 0 ]
 then echo "make failed, run make -f Makefile.$cpu by hand"
