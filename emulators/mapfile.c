@@ -84,7 +84,7 @@ void read_mapfile(char *filename) {
 
   // Add a final entry so we can
   // index one past the end
-  maparray[mapcnt].addr = 0;
+  maparray[mapcnt].addr = 0xFFFF;
   maparray[mapcnt].sym = NULL;
   mapfile_loaded = 1;
 }
