@@ -6,7 +6,7 @@ CSRCS += move.c rmxcall.c ucsd.c undo.c unixcall.c wildargs.c
 HDRS  = extern.h grep.h levee.h proto.h
 
 OBJSL = $(CSRCS:.c=.o-l)
-OBJSA = $(CSRCS:.c=.o)
+OBJSA = $(CSRCS:.c=.o-a)
 OBJSV = $(CSRCS:.c=.o-v)
 
 all: levee-ansi levee-vt52
@@ -19,8 +19,8 @@ levee-vt52: $(OBJSV) $(CRT0)
 
 ## need to change include file and add appropriate -D -- and to z80 version, too
 
-$(OBJSA): %.o: %.c $(HDRS)
-	$(CC) $(CFLAGS) $(COPT) -c -DVT52=0 -DANSI=1 -o $*.o $*.c
+$(OBJSA): %.o-a: %.c $(HDRS)
+	$(CC) $(CFLAGS) $(COPT) -c -DVT52=0 -DANSI=1 -o $*.o-a $*.c
 
 $(OBJSV): %.o-v: %.c $(HDRS)
 	$(CC) $(CFLAGS) $(COPT) -c -DVT52=1 -DANSI=0 -o $*.o-v $*.c
