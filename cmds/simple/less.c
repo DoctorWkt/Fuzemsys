@@ -266,6 +266,7 @@ struct lineposn *reposition(struct lineposn *this, int count) {
 }
 
 int main(int argc, char *argv[]) {
+  FILE *kybd=stdin;
   struct lineposn *this;
   int looping = 1;
   int ch;
@@ -273,8 +274,15 @@ int main(int argc, char *argv[]) {
   // Check the arguments
   if (argc > 2) { fprintf(stderr, "Usage: less [filename]\n"); exit(1); }
 
-  // Build the doubly-linked list of lines and their offsets
-  if (argc == 1) build_line_list(NULL);
+  // Build the doubly-linked list of lines and their offsets.
+  // Also open the terminal if our file is on stdin.
+  if (argc == 1) {
+    build_line_list(NULL);
+    kybd= fopen("/dev/tty", "r");
+    if (kybd==NULL) {
+      fprintf(stderr, "Unable to open /dev/tty\n"); exit(1);
+    }
+  }
   else build_line_list(argv[1]);
 
 #if 0
@@ -302,8 +310,7 @@ int main(int argc, char *argv[]) {
     // Draw a page of the file
     paint_screen(this);
 
-    ch = getchar();
-    putchar(ch);
+    ch = fgetc(kybd);
     switch (ch) {
     case 'q':			// Quit the pager
     case EOF:
