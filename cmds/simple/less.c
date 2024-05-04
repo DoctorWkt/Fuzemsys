@@ -278,9 +278,9 @@ int main(int argc, char *argv[]) {
   // Also open the terminal if our file is on stdin.
   if (argc == 1) {
     build_line_list(NULL);
-    kybd= fopen("/dev/tty", "r");
+    kybd= fdopen(1, "r");
     if (kybd==NULL) {
-      fprintf(stderr, "Unable to open /dev/tty\n"); exit(1);
+      fprintf(stderr, "Unable to fdopen fd 1\n"); exit(1);
     }
   }
   else build_line_list(argv[1]);
