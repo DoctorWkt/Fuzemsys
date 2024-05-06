@@ -5,6 +5,7 @@ LINKER = ld6809
 CFLAGS = -O -c
 #LINKER_OPT = -L$(FUZIX_ROOT)/Library/libs
 LINKER_TAIL = $(FUZIX_ROOT)/lib/6809/libc.a $(FUZIX_ROOT)/lib/6809/lib6809.a
+LIBREADLINE = $(FUZIX_ROOT)/lib/6809/libreadline.a
 ASM_OPT = -o
 CRT0 = $(FUZIX_ROOT)/lib/6809/crt0.o
 CRT0NS = $(FUZIX_ROOT)/lib/6809/crt0nostdio.o

@@ -35,6 +35,10 @@
 #define FO_NOCTTY        2048
 #define FO_CLOEXEC       4096
 
+#define FFD_CLOEXEC	4096		// FUZIX fcntl() defines
+#define FF_GETFD	2
+#define FF_SETFD	3
+
 #define FO_TCGETS	1		// FUZIX ioctls
 #define FO_TCSETS	2
 #define FO_TCSETSW	3
@@ -647,6 +651,7 @@ int do_syscall(int op, int *longresult) {
   uint16_t addr;	// Address in emulator memory
   int options;		// Waitpid options
   int wstatus;		// Waitpid status
+  int cmd;		// Fcntl command
   struct stat hstat;	// Host stat struct;
   struct _uzistat *ustat; // Emulator stat struct;
   int pipefd[2];	// Pipe fds
@@ -962,6 +967,16 @@ setterm:
 	break;
     case 45:		// getegid
 	result= getegid();
+	break;
+    case 47:		// fcntl. Only a few handled
+	fd= uiarg(0);
+	cmd= uiarg(2);
+	options= uiarg(4);
+	if ((cmd==FF_SETFD) && (options==FFD_CLOEXEC)) {
+	  result= fcntl(fd, F_SETFD, FD_CLOEXEC);
+	} else {
+	  result=-1;
+	}
 	break;
     case 48:		// fchdir
 	fd= uiarg(0);
