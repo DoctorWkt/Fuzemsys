@@ -999,6 +999,11 @@ setterm:
 	fd= uiarg(0);
 	result= fchdir(fd);
 	break;
+    case 49:		// fchmod
+	fd= uiarg(0);
+	mode= uiarg(2);
+	result= fchmod(fd, mode);
+	break;
     case 50:		// fchown
 	fd= uiarg(0);
  	owner= uiarg(2);
