@@ -1,0 +1,2 @@
+USERCPU=6809
+include Makefile.common

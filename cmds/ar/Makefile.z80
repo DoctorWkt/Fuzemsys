@@ -1,0 +1,2 @@
+USERCPU=z80
+include Makefile.common
