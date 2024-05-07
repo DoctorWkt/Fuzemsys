@@ -66,7 +66,7 @@
 65:_memfree
 66:___netcall
 67:_sleep
-68:__nosys68
+68:_ftruncate
 69:__nosys69
 70:__nosys70
 71:__nosys71

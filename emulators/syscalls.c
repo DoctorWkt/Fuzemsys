@@ -225,6 +225,15 @@ unsigned int uiarg(int off) {
   return(val);
 }
 
+// Unsigned 32-bit integer argument
+unsigned int ularg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  unsigned int val= (e6809_read8(sp) << 24) | (e6809_read8(sp+1) << 16) |
+	(e6809_read8(sp+2) << 8) | e6809_read8(sp+3);
+  // printf("ularg %d is %d\n", off, val);
+  return(val);
+}
+
 // Put 16-bit value in memory at the given location
 void putui(uint16_t addr, uint16_t val) {
   e6809_write8(addr++, val >> 8);
@@ -291,6 +300,14 @@ unsigned int uiarg(int off) {
   uint16_t sp= get_sp() + 2 + off;
   unsigned int val= mem_read(0, sp) | (mem_read(0, sp+1) << 8);
   // printf("uiarg %d is %d\n", off, val);
+  return(val);
+}
+
+unsigned int ularg(int off) {
+  uint16_t sp= get_sp() + 2 + off;
+  unsigned int val= mem_read(0, sp) | (mem_read(0, sp+1) << 8) |
+	(mem_read(0, sp+2) << 16) | (mem_read(0, sp+3) << 24);
+  // printf("ularg %d is %d\n", off, val);
   return(val);
 }
 
@@ -1026,6 +1043,11 @@ setterm:
 	// extra syscall.
 	duration= uiarg(0);
 	result= sleep(duration);
+	break;
+    case 68:		// ftruncate, new
+	fd= uiarg(0);
+	off= ularg(2);
+	result= ftruncate(fd, off);
 	break;
     case 77:		// setpgid
 	pid= uiarg(0);

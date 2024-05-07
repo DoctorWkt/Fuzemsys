@@ -126,4 +126,7 @@ extern void exit(int __status);
 extern int fsync(int fd);
 extern int fdatasync(int fd);
 
+extern int truncate(const char *path, off_t length);
+extern int ftruncate(int fd, off_t length);
+
 #endif /* __UNISTD_H */
