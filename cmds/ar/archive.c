@@ -89,7 +89,7 @@ int open_archive(int mode)
 	 * error then someone is already working on this library (or
 	 * it's going across NFS).
 	 */
-opened:	if (flock(fd, LOCK_EX|LOCK_NB) && errno != EOPNOTSUPP)
+opened:	if (flock(fd, LOCK_EX) && errno != EOPNOTSUPP)
 		error(archive);
 	
 	/*
