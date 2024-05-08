@@ -831,8 +831,9 @@ int do_syscall(int op, int *longresult) {
 	path= xlate_filename((char *)get_memptr(uiarg(0)));
 	if (path==NULL) { result=-1; errno=EFAULT; break; }
 
-	// See if we can open this file. If not, use the
-	// original pathname.
+	// See if we can open this file (might be translated).
+	// If not, use the original pathname which could be a
+	// native binary.
 	arglist[0]= Emuname;
 	fd= open(path, O_RDONLY);
 	if (fd==-1) {
@@ -841,6 +842,17 @@ int do_syscall(int op, int *longresult) {
 	  close(fd);
 	  arglist[1]= strdup((char *)path);
 	}
+
+	// Do it all again so we don't call main() with something
+	// that doesn't exist
+	fd= open(arglist[1], O_RDONLY);
+	if (fd==-1) {
+	  errno= EACCES;
+	  result= -1;
+	  break;
+	} else {
+	  close(fd);
+ 	}
 
 	// Get address of base of arg list. Skip the first argument
 	addr= uiarg(2); addr+=2;
