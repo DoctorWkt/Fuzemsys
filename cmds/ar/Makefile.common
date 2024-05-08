@@ -15,6 +15,9 @@ all: ar
 ar: $(OBJ)
 	$(LINKER) $(CRT0) $^ -o $@ $(LINKER_OPT) $(LINKER_TAIL) -m ar.map
 
+install: ar
+	cp ar ../../build/$(USERCPU)/bin
+
 clean:
 	rm -f *.o ar core *~ *.asm *.lst *.sym *.map *.noi *.lk *.ihx *.tmp *.bin size.report
 

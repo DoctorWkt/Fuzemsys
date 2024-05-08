@@ -23,5 +23,8 @@ cprintf.o: cprintf.c
 	-$(LINKER) -o $@ $(CRT0) $@.o $(LINKER_TAIL) -m $@.map
 	-rm $@.o
 
+install: all
+	cp $(CBINS) $(BINS) ../../build/$(USERCPU)/bin
+
 clean:
 	rm -rf *.o *.s *.rel *.map $(BINS) $(CBINS)

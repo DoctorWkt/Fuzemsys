@@ -11,4 +11,4 @@ clean:
 	(cd emulators;   make clean)
 	(cd libs;        make clean)
 	(cd tests;       make clean)
-	(cd cmds/simple; make clean)
+	(cd cmds;        make clean)

@@ -25,6 +25,9 @@ $(OBJSA): %.o-a: %.c $(HDRS)
 $(OBJSV): %.o-v: %.c $(HDRS)
 	$(CC) $(CFLAGS) $(COPT) -c -DVT52=1 -DANSI=0 -o $*.o-v $*.c
 
+install: all
+	cp levee-ansi levee-vt52 ../../build/$(USERCPU)/bin
+
 clean:
 	rm -rf $(OBJS) $(OBJSL) $(OBJSA) $(OBJSV) *.lst *.sym *.map *.noi *.lk *.ihx *.tmp *~ *.o *.rel *.asm
 	rm -f levee levee-vt52 levee-ansi *.bin levee-termcap
