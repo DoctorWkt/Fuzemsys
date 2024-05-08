@@ -1,0 +1,27 @@
+include ../../Target/rules.$(USERCPU)
+
+CBINS= cat echo ln mkdir oldgrep rm
+BINS= banner basename cal cmp cut date head \
+	less ls more od printenv pwd rev roff sed \
+	sh sort tail tsort
+
+# Programs that don't use stdio
+cat: CRT0= $(CRT0NS) cprintf.o
+echo: CRT0= $(CRT0NS) cprintf.o
+ln: CRT0= $(CRT0NS) cprintf.o
+mkdir: CRT0= $(CRT0NS) cprintf.o
+oldgrep: CRT0= $(CRT0NS) cprintf.o
+rm: CRT0= $(CRT0NS) cprintf.o
+
+all: cprintf.o $(CBINS) $(BINS)
+
+cprintf.o: cprintf.c
+	$(CC) -o $@ $(CFLAGS) $<
+
+%: %.c cprintf.o
+	$(CC) -o $@.o $(CFLAGS) $<
+	-$(LINKER) -o $@ $(CRT0) $@.o $(LINKER_TAIL) -m $@.map
+	-rm $@.o
+
+clean:
+	rm -rf *.o *.s *.rel *.map $(BINS) $(CBINS)

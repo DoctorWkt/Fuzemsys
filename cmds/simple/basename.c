@@ -20,8 +20,6 @@
 
 #define EOS '\0'
 
-_PROTOTYPE(int main, (int argc, char **argv));
-
 int main(int argc, char *argv[])
 {
   char *result_string;		/* The pointer into argv[1]. */
