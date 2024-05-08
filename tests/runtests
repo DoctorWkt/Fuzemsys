@@ -2,7 +2,8 @@
 # Run each test and compare
 # against known good output
 
-# echo "Ignore the Terminated message on test020"
+# Turn off any FUZIXROOT
+FUZIXROOT=
 
 # Compare good output vs. this output
 compare_out() {
