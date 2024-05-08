@@ -88,3 +88,61 @@ Hexadecimal literals start with $, e.g. $1234
 Symbols start with _ or [A-Za-z], e.g. _printf
 Symbols + offset, e.g. _printf+23, _printf+$100
 ```
+
+## Emulated Filesystems
+
+The emulators now have the concept of an emulated filesystem. Go into
+the `cmds` directory and do a `make install`. This will create two
+directories, `build/6809/` and `build/z80/` at the top level of the
+repository. Each one contains a `bin/` directory with the available
+application binaries.
+
+Now set the `FUZIXROOT` environment to one of the "build" directories, e.g.
+
+```
+export FUZIXROOT=<mumble>/build/z80
+```
+
+You can now `cd $FUZIXROOT` and start an emulated shell up:
+
+```
+cd $FUZIXROOT
+emuz80 bin/sh
+$
+```
+
+The `$` sign is the emulated shell prompt. From here you can explore
+the emulated filesystem, e.g.
+
+```
+$ ls -l
+drwxr-xr-x   2 1000     1000         4096 May 08 03:56 bin
+$ cd bin
+$ ls -l
+-rwxr-xr-x   1 1000     1000        23970 May 08 03:56 ar
+-rwxr-xr-x   1 1000     1000        10551 May 08 03:56 banner
+-rwxr-xr-x   1 1000     1000         5669 May 08 03:56 basename
+-rwxr-xr-x   1 1000     1000         7781 May 08 03:56 cal
+-rwxr-xr-x   1 1000     1000         1931 May 08 03:56 cat
+-rwxr-xr-x   1 1000     1000         5453 May 08 03:56 cmp
+-rwxr-xr-x   1 1000     1000        29256 May 08 03:56 cpp
+-rwxr-xr-x   1 1000     1000        10849 May 08 03:56 cut
+-rwxr-xr-x   1 1000     1000         8933 May 08 03:56 date
+...
+-rwxr-xr-x   1 1000     1000        10203 May 08 03:56 sh
+-rwxr-xr-x   1 1000     1000        18139 May 08 03:56 sort
+-rwxr-xr-x   1 1000     1000        13611 May 08 03:56 tail
+-rwxr-xr-x   1 1000     1000        11693 May 08 03:56 tsort
+$ 
+```
+
+Filenames starting with `/` are translated to start with `$FUZIXROOT`.
+The exception are emulated binaries that don't exist. For example,
+there is no `vi`. From within the emulator, if you try to run `/usr/bin/vi`
+from the shell then:
+
+ - the exec of $FUZIXROOT/usr/bin/vi fails
+ - instead, we try to exec /usr/bin/vi which succeeds
+
+This allows you to run native binary executables from within the emulators
+as well as the emulated binary executables.
