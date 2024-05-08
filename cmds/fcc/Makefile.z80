@@ -1,0 +1,20 @@
+USERCPU=z80
+include ../../Target/rules.z80
+
+BINOBJ= fcc
+
+all: $(BINOBJ)
+
+.c.o:
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+
+fcc: cc.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) cc.o $(LINKER_TAIL) -m $@.map
+	-rm cc.o
+
+install: all
+	cp $(BINOBJ) ../../build/$(USERCPU)/bin
+
+clean:
+	rm -f *.map *.o $(BINOBJ)
