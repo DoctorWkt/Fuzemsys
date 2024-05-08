@@ -64,11 +64,12 @@
 	extern int setjmp(jmp_buf __env);
 	__attribute__((__noreturn__)) void longjmp (jmp_buf __env, int __val);
 
-#elif defined(__m6809__)
+#elif defined(__6809__)
 
 	typedef uint16_t jmp_buf[4];
 	extern int setjmp(jmp_buf __env);
-	__attribute__((__noreturn__)) void longjmp (jmp_buf __env, int __val);
+	/*__attribute__((__noreturn__)) void longjmp (jmp_buf __env, int __val); */
+	void longjmp (jmp_buf __env, int __val);
 
 #elif defined(mc68hc11)
 

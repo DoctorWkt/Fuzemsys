@@ -7,7 +7,7 @@
 
 extern int signgam;
 
-#if !defined(double) && !defined(__m6809__)
+#if !defined(double) && !defined(__6809__)
 
 /* Compiler with full float/double support */
 
