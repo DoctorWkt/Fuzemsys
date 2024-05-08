@@ -7,8 +7,7 @@ ASM_OPT = -o
 
 SRC_CRT0 = z80/crt0.s z80/crt0nostdio.s
 OBJ_CRT0 = $(SRC_CRT0:.s=.o)
-#SRC_ASM = z80/setjmp_z80.s z80/ashlsi3_z80.s
-SRC_ASM = z80/syscalls.s
+SRC_ASM = z80/syscalls.s z80/setjmp_z80.s
 OBJ_ASM = $(SRC_ASM:.s=.o)
 SRC_C =  __argv.c abort.c accept.c aes256.c asctime.c asctime_r.c assert.c atexit.c
 SRC_C += basename.c bcmp.c bcopy.c bind.c bsearch.c bzero.c

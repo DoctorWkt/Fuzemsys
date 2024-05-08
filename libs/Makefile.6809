@@ -8,7 +8,7 @@ ASM_OPT = -o
 SRC_CRT0 = 6809/crt0.s 6809/crt0nostdio.s
 OBJ_CRT0 = $(SRC_CRT0:.s=.o)
 #SRC_ASM = 6809/setjmp_6809.s 6809/ashlsi3_6809.s
-SRC_ASM = 6809/syscalls.s
+SRC_ASM = 6809/syscalls.s 6809/setjmp_6809.s
 OBJ_ASM = $(SRC_ASM:.s=.o)
 SRC_C =  __argv.c abort.c accept.c aes256.c asctime.c asctime_r.c assert.c atexit.c
 SRC_C += basename.c bcmp.c bcopy.c bind.c bsearch.c bzero.c

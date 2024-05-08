@@ -2,10 +2,10 @@
 ; Copyright 2015 Tormod Volden
 
 	; exported
-	.globl _setjmp
-	.globl _longjmp
+	.export _setjmp
+	.export _longjmp
 
-	.area .text
+	.code
 
 ; int setjmp(jmp_buf)
 _setjmp:
@@ -23,7 +23,7 @@ _longjmp:
 	ldd 2,s		; second argument
 	bne nz		; must not be 0
 	incb
-nz	ldy ,x++
+nz:	ldy ,x++
 	ldu ,x++
 	lds ,x++	; points to clobbered return address
 	ldx ,x
@@ -31,4 +31,3 @@ nz	ldy ,x++
 	; return given argument to setjmp caller
 	tfr d,x
 	rts
-
