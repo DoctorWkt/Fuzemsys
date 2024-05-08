@@ -17,6 +17,14 @@ compare_out() {
        else echo
        fi
 
+       # If there is any error output, show if
+       if [ -s testerr ]
+       then
+	 echo "Run-time error file:"
+	 cat testerr
+	 echo
+       fi
+
   # No failure, so announce success
   else echo ": OK"
   fi
@@ -55,7 +63,7 @@ do
   # Run the test with some arguments, capture the output.
   # Also get a sorted output file. sh -c here as bash
   # gives a Terminated output on test020.
-  sh -c "emu$cpu $b -l -foo file1 file2 > testout 2> /dev/null"
+  sh -c "emu$cpu $b -l -foo file1 file2 > testout 2> testerr"
   sort testout > sortout
 
   # Use the sorted output if that's our good output
@@ -68,14 +76,14 @@ do
   # Otherwise use the unsorted output
   if [ ! -f "out/$b" ]
   then echo " has no output file to compare against"
-       rm -f sortout testout $b
+       rm -f sortout testout testerr $b
        continue
   fi
 
   compare_out "out/$b" testout
 
   # Remove the test and the outputs
-  rm -f testout sortout $b
+  rm -f testout sortout testerr $b
 done
 
 # Clean up
