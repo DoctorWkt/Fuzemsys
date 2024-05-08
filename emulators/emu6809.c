@@ -26,6 +26,7 @@ uint8_t ram[65536];
 FILE *logfile=NULL;
 char *mapfile = NULL;
 char **Argv;
+char *Emuname;
 
 // Default environment variables
 static char *default_envp[] = {
@@ -169,6 +170,7 @@ int main(int argc, char *argv[]) {
   int i, brkcnt=0;
 
   if (argc<2) usage(argv[0]);
+  Emuname= argv[0];
 
   // Create an array to hold any breakpoint string pointers
   brkstr= (char **)malloc(argc * sizeof(char *));

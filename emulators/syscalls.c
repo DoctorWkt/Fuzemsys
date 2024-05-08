@@ -22,6 +22,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+extern char *Emuname;
+extern void main(int argc, char **argv);
+
 #define MAX_ARGS	200	// Max cmd-line args per process
 
 // FUZIX defines which could be different from the host system
@@ -823,16 +826,37 @@ int do_syscall(int op, int *longresult) {
 	result= umask(mode);
 	break;
     case 23:		// execve
-	path= (const char *)xlate_filename((char *)get_memptr(uiarg(0)));
+
+	// Fail if the path is NULL
+	path= xlate_filename((char *)get_memptr(uiarg(0)));
 	if (path==NULL) { result=-1; errno=EFAULT; break; }
-	// Get address of base of arg list
-	addr= uiarg(2);
+
+	// See if we can open this file. If not, use the
+	// original pathname.
+	arglist[0]= Emuname;
+	fd= open(path, O_RDONLY);
+	if (fd==-1) {
+	  arglist[1]= strdup((char *)get_memptr(uiarg(0)));
+	} else {
+	  close(fd);
+	  arglist[1]= strdup((char *)path);
+	}
+
+	// Get address of base of arg list. Skip the first argument
+	addr= uiarg(2); addr+=2;
 	// Get the pointers to the arguments
-	for (i=0; getui(addr)!=0; i++, addr+=2)
-	  arglist[i]= (char *)get_memptr(getui(addr));
+	for (i=2; getui(addr)!=0; i++, addr+=2)
+	  arglist[i]= strdup((char *)get_memptr(getui(addr)));
 	// NULL terminate the list
 	arglist[i]=NULL;
-	result=execve(path, arglist, NULL);
+
+	// Call ourselves so that either the emulated binary
+	// is loaded, or we exec() the native binary.
+	// The strdup()s above as main() will clear the
+	// emulator's memory.
+	main(i, arglist);
+	errno= EACCES;
+	result= -1;
 	break;
     case 25:		// setuid
 	owner= uiarg(0);

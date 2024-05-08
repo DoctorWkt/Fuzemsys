@@ -21,6 +21,7 @@ uint8_t ram[65536];
 FILE *logfile=NULL;
 char *mapfile = NULL;
 char **Argv = NULL;
+char *Emuname;
 
 Z80Context cpu_z80;
 
@@ -227,6 +228,7 @@ int main(int argc, char *argv[])
   int breakpoint;
 
   if (argc<2) usage(argv[0]);
+  Emuname=argv[0];
 
   // Create an array to hold any breakpoint string pointers
   brkstr= (char **)malloc(argc * sizeof(char *));
