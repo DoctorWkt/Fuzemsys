@@ -25,6 +25,7 @@ uint8_t ram[65536];
 
 FILE *logfile=NULL;
 char *mapfile = NULL;
+char **Argv;
 
 // Default environment variables
 static char *default_envp[] = {
@@ -128,15 +129,11 @@ static uint16_t load_executable(char *filename) {
     }
   }
 
-  /* It's not a FUZIX binary, so read it in as a raw file at addr 0 */
-  if (read(fd, ram, 0xFC00) < 10) {
-    fprintf(stderr, "emu6809: executable not FUZIX, too small.\n");
-    perror(filename);
-    exit(1);
-  }
-  close(fd);
-  /* Set the starting address as 0x100 for a raw file */
-  return(0x100);
+  /* It's not a FUZIX binary. Instead, exec it as a native binary. */
+  /* envp[] is the one the emulator's main() got */
+  execv(filename, Argv);
+  fprintf(stderr, "Failed to exec native binary %s\n", filename);
+  exit(1);
 }
 
 #ifdef DEBUG
@@ -209,6 +206,7 @@ int main(int argc, char *argv[]) {
   memset(ram, 0, 0x10000);
 
   // Load the executable file
+  Argv= &argv[optind];
   pc=load_executable(argv[optind]);
 
   // If we didn't load a map file, append
