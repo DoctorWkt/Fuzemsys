@@ -1,0 +1,52 @@
+USERCPU=6809
+include ../../Target/rules.6809
+
+HDR = as.h ld.h obj.h
+CORE = as0.c as2.c as3.c as4.c
+COREOBJ = as0.o as2.o as3.o as4.o
+
+OBJ = reloc template ld6809 nm6809 osize6809 dumprelocs6809 as6809
+
+all: $(OBJ)
+
+.c.o:
+	$(CC) $(CFLAGS) -DTARGET_6809 $(CCOPTS) -c $<
+
+reloc: reloc.c $(HDR)
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) $@.o $(LINKER_TAIL) -m $@.map
+	-rm $@.o
+
+template: template.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) $@.o $(LINKER_TAIL) -m $@.map
+	-rm $@.o
+
+ld6809: ld.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) ld.o $(LINKER_TAIL) -m $@.map
+	-rm ld.o
+
+nm6809: nm.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) nm.o $(LINKER_TAIL) -m $@.map
+	-rm nm.o
+
+osize6809: osize.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) osize.o $(LINKER_TAIL) -m $@.map
+	-rm osize.o
+
+dumprelocs6809: dumprelocs.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) dumprelocs.o $(LINKER_TAIL) -m $@.map
+	-rm dumprelocs.o
+
+as6809: $(HDR) $(COREOBJ) as1-6809.o as6-6809.o
+	-$(LINKER) -o $@ $(CRT0) $(COREOBJ) as1-6809.o as6-6809.o $(LINKER_TAIL) -m $@.map
+
+install: all
+	cp $(OBJ) ../../build/$(USERCPU)/bin
+
+clean:
+	rm -f *.map *.o $(OBJ)
