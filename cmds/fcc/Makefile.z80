@@ -13,12 +13,17 @@ CCROOT ?=/
 
 CFLAGS+= -DLIBPATH="\"$(CCROOT)/lib\"" -DBINPATH="\"$(CCROOT)/bin\""
 
-BINOBJ= fcc cc1.z80
+BINOBJ= fcc copt cc1.z80
 
 all: $(BINOBJ)
 
-.c.o:
+%.o: %.c
 	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+
+%: %.c
+	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	-$(LINKER) -o $@ $(CRT0) $*.o $(LINKER_TAIL) -m $@.map
+	-rm $*.o
 
 fcc: cc.c
 	$(CC) $(CFLAGS) $(CCOPTS) -c $<
