@@ -1,7 +1,19 @@
 USERCPU=z80
 include ../../Target/rules.z80
 
-BINOBJ= fcc
+OBJS1 = body.o declaration.o enum.o error.o expression.o header.o idxdata.o \
+	initializer.o label.o lex.o main.o primary.o stackframe.o storage.o \
+	struct.o switch.o symbol.o tree.o type.o type_iterator.o
+
+INC1 = body.h compiler.h declaration.h enum.h error.h expression.h header.h \
+	idxdata.h initializer.h label.h lex.h primary.h stackframe.h storage.h \
+	struct.h symbol.h target.h token.h tree.h type.h type_iterator.h
+
+CCROOT ?=/
+
+CFLAGS+= -DLIBPATH="\"$(CCROOT)/lib\"" -DBINPATH="\"$(CCROOT)/bin\""
+
+BINOBJ= fcc cc1.z80
 
 all: $(BINOBJ)
 
@@ -12,6 +24,11 @@ fcc: cc.c
 	$(CC) $(CFLAGS) $(CCOPTS) -c $<
 	-$(LINKER) -o $@ $(CRT0) cc.o $(LINKER_TAIL) -m $@.map
 	-rm cc.o
+
+$(OBJS1): $(INC1)
+
+cc1.z80: $(OBJS1) target-z80.o
+	-$(LINKER) -o $@ $(CRT0) $(OBJS1) target-z80.o $(LINKER_TAIL) -m $@.map
 
 install: all
 	cp $(BINOBJ) ../../build/$(USERCPU)/bin
