@@ -1,0 +1,12 @@
+fred[0] is 16
+ptr[0]  is 16
+fred[2] is 11
+ptr[2]  is 11
+fred[3] is 23
+ptr[3]  is 23
+fred[3] is 0
+ptr[3]  is 0
+fred[0] is 16
+ptr[0]  is 16
+fred[2] is 11
+ptr[2]  is 11
