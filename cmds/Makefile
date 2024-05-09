@@ -12,7 +12,7 @@ install:
 	(cd bintools; make -f Makefile.z80 clean install)
 	@echo
 	@echo Now set FUZIXROOT to `readlink -f ../build`/CPU
-	@echo where BIN is 6809 or z80
+	@echo where CPU is 6809 or z80
 
 clean:
 	rm -rf ../build
