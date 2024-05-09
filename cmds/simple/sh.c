@@ -66,7 +66,7 @@ struct cmd *parsecmd(char*);
 void
 runcmd(struct cmd *cmd)
 {
-  char binbuf[100];
+  char binbuf[160];
   int p[2];
   int wstat;
   struct backcmd *bcmd;
@@ -91,6 +91,11 @@ runcmd(struct cmd *cmd)
     // The basic exec failed. Try exec'ing /bin/argv[0]
     strcpy(binbuf, "/bin/");
     strcpy(&binbuf[5], ecmd->argv[0]);
+    execv(binbuf, ecmd->argv);
+
+    // That also failed. Try exec'ing /usr/bin/argv[0]
+    strcpy(binbuf, "/usr/bin/");
+    strcpy(&binbuf[9], ecmd->argv[0]);
     execv(binbuf, ecmd->argv);
 
     fprintf(stderr, "exec %s failed\n", ecmd->argv[0]);
