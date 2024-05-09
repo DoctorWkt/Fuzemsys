@@ -1,8 +1,10 @@
 # Fuzemsys
 
-This is a spin off of the emulators in the FUZIX Compiler Kit; I am adding
+This is a spin off of the emulators in the
+[Fuzix Compiler Kit](https://github.com/EtchedPixels/Fuzix-Compiler-Kit);
+I am adding
 FUZIX system call support to them. Eventually (hopefully) the changes will
-get merged back into the FUZIX Compiler Kit.
+get merged back into the Fuzix Compiler Kit.
 
 ## Usage
 
@@ -14,13 +16,13 @@ Firstly get:
 Compile Bintools and install into `/opt/fcc`, then compile the compiler kit
 and install there as well.
 
-Do a `make; make install` here to build at the 6809 and Z80 emulators and install
+Do a `make; make install` here to build the 6809 and Z80 emulators and install
 them into `/opt/fcc/bin/`. This will also install the 6809/Z80 include files
 and the 6809/Z80 libraries.
 
 ## Tests
 
-With the emulator installed, change into the `tests` directory and do a
+With the emulators installed, change into the `tests` directory and do a
 `make -f Makefile.6809` to build the 6809 test executables. Now, for example, you can run:
 
 ```
@@ -45,11 +47,11 @@ test032.c: OK
 ## Commands
 
 There are some commands in the `cmds/` directory which will run under the
-emulator. Use the appropriate `Makefile` for the CPU that you wish.
+emulator. Use the appropriate `Makefile` for the CPU that you wish. See below about emulated filesystems.
 
 ## Emulator Usage
 
-The `emu6809` and `emuz80` emulators now have support for map files and a built-in monitor.
+The `emu6809` and `emuz80` emulators have support for map files and include a built-in monitor.
 Here are the usage details for `emu6809` (the same as `emuz80`):
 
 ```
@@ -91,7 +93,7 @@ Symbols + offset, e.g. _printf+23, _printf+$100
 
 ## Emulated Filesystems
 
-The emulators now have the concept of an emulated filesystem. Go into
+The emulators have the concept of an emulated filesystem. Go into
 the `cmds` directory and do a `make install`. This will create two
 directories, `build/6809/` and `build/z80/` at the top level of the
 repository. Each one contains a `bin/` directory with the available
@@ -133,7 +135,7 @@ $ ls -l
 -rwxr-xr-x   1 1000     1000        18139 May 08 03:56 sort
 -rwxr-xr-x   1 1000     1000        13611 May 08 03:56 tail
 -rwxr-xr-x   1 1000     1000        11693 May 08 03:56 tsort
-$ 
+$
 ```
 
 Filenames starting with `/` are translated to start with `$FUZIXROOT`.
@@ -141,8 +143,12 @@ The exception are emulated binaries that don't exist. For example,
 there is no `vi`. From within the emulator, if you try to run `/usr/bin/vi`
 from the shell then:
 
- - the exec of $FUZIXROOT/usr/bin/vi fails
- - instead, we try to exec /usr/bin/vi which succeeds
+ - the exec of `$FUZIXROOT/usr/bin/vi` fails
+ - instead, we try to exec `/usr/bin/vi` which succeeds
 
 This allows you to run native binary executables from within the emulators
 as well as the emulated binary executables.
+
+The emulated shell has an implicit `PATH` which is `/bin:/usr/bin`.
+So you can simply type in `vi` and the shell will run the native `vi`
+which lives in `/usr/bin`.
