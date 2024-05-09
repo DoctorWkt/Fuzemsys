@@ -13,7 +13,7 @@ CCROOT ?=/
 
 CFLAGS+= -DLIBPATH="\"$(CCROOT)/lib\"" -DBINPATH="\"$(CCROOT)/bin\""
 
-BINOBJ= fcc copt cc1.z80
+BINOBJ= fcc copt cc1.z80 cc2.z80
 
 all: $(BINOBJ)
 
@@ -34,6 +34,9 @@ $(OBJS1): $(INC1)
 
 cc1.z80: $(OBJS1) target-z80.o
 	-$(LINKER) -o $@ $(CRT0) $(OBJS1) target-z80.o $(LINKER_TAIL) -m $@.map
+
+cc2.z80: backend.o backend-z80.o
+	-$(LINKER) -o $@ $(CRT0) backend.o backend-z80.o $(LINKER_TAIL) -m $@.map
 
 install: all
 	cp $(BINOBJ) ../../build/$(USERCPU)/bin
