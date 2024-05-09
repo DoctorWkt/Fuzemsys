@@ -1,0 +1,42 @@
+include ../../Target/rules.$(USERCPU)
+
+SRCS  = args.c blok.c builtin.c cmd.c ctype.c error.c expand.c fault.c io.c \
+        macro.c main.c msg.c name.c print.c service.c setbrk.c stak.c \
+        string.c word.c xec.c glob.c
+
+INCS  = brkincr.h ctype.h defs.h mac.h mode.h name.h stak.h sym.h timeout.h
+
+OBJS = $(SRCS:.c=.o)
+
+all: fsh sh
+
+$(OBJS): $(INCS)
+FOBJS = $(patsubst %.c,fshbuild_%.o, $(SRCS))
+
+OBJS = $(SRCS:.c=.o)
+
+$(FOBJS): $(INCS)
+
+$(OBJS): %.o : %.c
+	$(CC) -c $(CFLAGS) $(COPT) $<
+
+$(FOBJS): fshbuild_%.o: %.c
+# -c and -o is busted if used together in cc65/cc6303
+	cp $< fshbuild_$<
+	$(CC) -c $(CFLAGS) $(COPT) -DBUILD_FSH fshbuild_$<
+
+sh: $(CRT0) $(OBJS)
+	$(LINKER) $^ -o $@ $(LINKER_OPT) $(LINKER_TAIL)
+
+fsh: $(CRT0) $(FOBJS)
+	$(LINKER) $^ -o $@ $(LINKER_OPT) $(LIBREADLINE) $(LINKER_TAIL)
+
+size.report: $(APPS)
+	ls -l $^ > $@
+
+clean:
+	rm -f *.o sh fsh core *~ *.asm *.lst *.sym *.map *.noi *.lk *.ihx *.tmp *.bin size.report *.o
+
+rmbak:
+	rm -f *~ core
+
