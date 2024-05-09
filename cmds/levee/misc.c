@@ -18,6 +18,7 @@
  */
 #include "levee.h"
 #include "extern.h"
+#include "misc.h"
 
 bool PROC
 lvgetline(char *str)
@@ -226,7 +227,7 @@ beeper(void)
 
 
 PROC
-error()
+error(void)
 {
     indirect = FALSE;
     macro = -1;

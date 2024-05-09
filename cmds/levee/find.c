@@ -16,11 +16,12 @@
  * WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include <ctype.h>
+#include <string.h>
 #include "levee.h"
 #include "extern.h"
 #include "grep.h"
-#include <ctype.h>
-#include <string.h>
+#include "find.h"
 
 static int arg;		/* arguments inside of a RE */
 

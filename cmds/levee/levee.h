@@ -115,8 +115,6 @@ extern long gemdos();
 #undef PROC
 #define PROC	_fastcall
 
-#include "proto.h"
-
 #endif /*MSDOS*/
 
 #if UNIX
@@ -394,7 +392,5 @@ struct variable {	/* Settable Variable Record */
     int v_flags;		/* special attributes... */
     union optionrec *u;		/* pointer to it */
 };
-
-#include "proto.h"
 
 #endif /*LEVEE_D*/

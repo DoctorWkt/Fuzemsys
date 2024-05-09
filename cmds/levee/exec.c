@@ -16,11 +16,17 @@
  * WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE.
  */
-#include "levee.h"
-#include "extern.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include "levee.h"
+#include "extern.h"
+#include "find.h"
+
+PROC undefine(int i);
+PROC doinput(char *name);
+PROC fixupline(int dft);
+PROC exec(char *cmd, exec_type *mode, bool *noquit);
 
 /*
  * do a newline and set flags.

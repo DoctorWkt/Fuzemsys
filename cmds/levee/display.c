@@ -38,6 +38,9 @@
 
 #endif
 
+PROC numtoa(char *str, int num);
+PROC clrprompt(void);
+
 PROC
 mvcur(int y, int x)
 {

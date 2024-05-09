@@ -16,10 +16,12 @@
  * WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE.
  */
-#include "levee.h"
-#include "extern.h"
 #include <ctype.h>
 #include <string.h>
+#include "levee.h"
+#include "extern.h"
+#include "find.h"
+#include "move.h"
 
 /* driver for movement commands */
 

@@ -1,0 +1,23 @@
+/* misc.c */
+int lvgetline(char *str);
+char readchar(void);
+char peekc(void);
+int findDLE(int start, int *endd, int limit, int dle);
+int skipws(int loc);
+int setX(int cp);
+int setY(int cp);
+int to_line(int cp);
+int to_index(int line);
+void swap(int *a, int *b);
+int cclass(unsigned char c);
+int error(void);
+int insertmacro(char *cmdstr, int count);
+int lookup(char c);
+void fixmarkers(int base, int offset);
+void wr_stat(void);
+void back_up(char c);
+char line(char *s, int start, int endd, int *size);
+void setpos(int loc);
+void resetX(void);
+void setend(void);
+int settop(int lines);
