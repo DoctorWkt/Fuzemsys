@@ -196,3 +196,8 @@ clean:
 install: all
 	cp 6809/crt*.o lib*.a /opt/fcc/lib/6809
 	rm -f *.o *.a
+
+buildinstall: all
+	mkdir -p ../build/6809/usr/lib
+	cp 6809/crt*.o lib*.a ../build/6809/usr/lib
+	rm -f *.o *.a
