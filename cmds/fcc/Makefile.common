@@ -27,7 +27,7 @@ all: $(BINOBJ)
 	-rm $*.o
 
 fcc: cc.c
-	$(CC) $(CFLAGS) $(CCOPTS) -c $<
+	$(CC) $(CFLAGS) -DNATIVE_CPU=\"$(USERCPU)\" $(CCOPTS) -c $<
 	-$(LINKER) -o $@ $(CRT0) cc.o $(LINKER_TAIL) -m $@.map
 	-rm cc.o
 
@@ -38,11 +38,17 @@ cc0: frontend.c
 
 $(OBJS1): $(INC1)
 
-cc1.$(USERCPU): $(OBJS1) target-$(USERCPU).o
-	-$(LINKER) -o $@ $(CRT0) $(OBJS1) target-$(USERCPU).o $(LINKER_TAIL) -m $@.map
+cc1.z80: $(OBJS1) target-z80.o
+	-$(LINKER) -o $@ $(CRT0) $^ $(LINKER_TAIL) -m $@.map
 
-cc2.$(USERCPU): backend.o backend-$(USERCPU).o
-	-$(LINKER) -o $@ $(CRT0) backend.o backend-$(USERCPU).o $(LINKER_TAIL) -m $@.map
+cc1.6809: $(OBJS1) target-6800.o
+	-$(LINKER) -o $@ $(CRT0) $^ $(LINKER_TAIL) -m $@.map
+
+cc2.z80: backend.o be-codegen-z80.o be-func-z80.o be-rewrite-z80.o
+	-$(LINKER) -o $@ $(CRT0) $^ $(LINKER_TAIL) -m $@.map
+
+cc2.6809: backend.o be-code-6800.o be-codegen-6800.o be-track-6800.o
+	-$(LINKER) -o $@ $(CRT0) $^ $(LINKER_TAIL) -m $@.map
 
 support$(USERCPU):
 	(cd support$(USERCPU); make)
@@ -51,5 +57,5 @@ install: all
 	cp $(BINOBJ) ../../build/$(USERCPU)/bin
 
 clean:
-	rm -f *.map *.o $(BINOBJ)
+	rm -f *.map *.o $(BINOBJ) fcc cc1.* cc2.*
 	(cd support$(USERCPU); make clean)

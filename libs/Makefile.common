@@ -192,6 +192,6 @@ install: all
 	rm -f *.o *.a
 
 buildinstall: all
-	mkdir -p ../build/$(USERCPU)/usr/lib
-	cp $(USERCPU)/crt*.o lib*.a ../build/$(USERCPU)/usr/lib
+	mkdir -p ../build/$(USERCPU)/lib
+	cp $(USERCPU)/crt*.o lib*.a ../build/$(USERCPU)/lib
 	rm -f *.o *.a
