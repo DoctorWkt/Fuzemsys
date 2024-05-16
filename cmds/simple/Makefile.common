@@ -6,19 +6,16 @@ BINS= banner basename cal cmp cut date head \
 	sh sort tail tsort
 
 # Programs that don't use stdio
-cat: CRT0= $(CRT0NS) cprintf.o
-echo: CRT0= $(CRT0NS) cprintf.o
-ln: CRT0= $(CRT0NS) cprintf.o
-mkdir: CRT0= $(CRT0NS) cprintf.o
-oldgrep: CRT0= $(CRT0NS) cprintf.o
-rm: CRT0= $(CRT0NS) cprintf.o
+cat: CRT0= $(CRT0NS)
+echo: CRT0= $(CRT0NS)
+ln: CRT0= $(CRT0NS)
+mkdir: CRT0= $(CRT0NS)
+oldgrep: CRT0= $(CRT0NS)
+rm: CRT0= $(CRT0NS)
 
-all: cprintf.o $(CBINS) $(BINS)
+all: $(CBINS) $(BINS)
 
-cprintf.o: cprintf.c
-	$(CC) -o $@ $(CFLAGS) $<
-
-%: %.c cprintf.o
+%: %.c
 	$(CC) -o $@.o $(CFLAGS) $<
 	-$(LINKER) -o $@ $(CRT0) $@.o $(LINKER_TAIL) -m $@.map
 	-rm $@.o

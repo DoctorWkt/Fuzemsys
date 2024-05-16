@@ -14,9 +14,10 @@ CCROOT ?=/
 
 CFLAGS+= -DLIBPATH="\"$(CCROOT)/lib\"" -DBINPATH="\"$(CCROOT)/bin\""
 
-BINOBJ= fcc cc0 copt cc1.$(USERCPU) cc2.$(USERCPU)
+BINOBJ= fcc
+LIBOBJ= cc0 copt cc1.$(USERCPU) cc2.$(USERCPU)
 
-all: $(BINOBJ)
+all: $(BINOBJ) $(LIBOBJ)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CCOPTS) -c $<
@@ -55,7 +56,8 @@ support$(USERCPU):
 
 install: all
 	cp $(BINOBJ) ../../build/$(USERCPU)/bin
+	cp $(LIBOBJ) ../../build/$(USERCPU)/lib
 
 clean:
-	rm -f *.map *.o $(BINOBJ) fcc cc1.* cc2.*
+	rm -f *.map *.o $(BINOBJ) $(LIBOBJ)
 	(cd support$(USERCPU); make clean)

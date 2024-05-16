@@ -5,50 +5,41 @@ TESTS =  test001 test002 test003 test004 test005 test006 test007 test008
 TESTS += test009 test010 test013 test014 test015 test016
 TESTS += test017 test018 test019 test020 test021 test022 test024
 TESTS += test025 test026 test027 test028 test029 test030 test031 test032
-TESTS += test033 test034 test035 test036 test037 test038 test039
+TESTS += test033 test034 test035 test036 test037 test038 test039 test040
 
 # Some tests use the crt0 which doesn't bring in the stdio library
 test001: CRT= $(CRT0NS)
-test002: CRT= $(CRT0NS) cprintf.o
-test003: CRT= $(CRT0NS) cprintf.o
-test004: CRT= $(CRT0NS) cprintf.o
-test005: CRT= $(CRT0NS) cprintf.o
-test006: CRT= $(CRT0NS) cprintf.o
-test007: CRT= $(CRT0NS) cprintf.o
-test008: CRT= $(CRT0NS) cprintf.o
-test009: CRT= $(CRT0NS) cprintf.o
-test010: CRT= $(CRT0NS) cprintf.o
-test011: CRT= $(CRT0NS) cprintf.o
-test012: CRT= $(CRT0NS) cprintf.o
-test013: CRT= $(CRT0NS) cprintf.o
-test014: CRT= $(CRT0NS) cprintf.o
-test015: CRT= $(CRT0NS) cprintf.o
-test016: CRT= $(CRT0NS) cprintf.o
-test017: CRT= $(CRT0NS) cprintf.o
-test018: CRT= $(CRT0NS) cprintf.o
-test019: CRT= $(CRT0NS) cprintf.o
-test020: CRT= $(CRT0NS) cprintf.o
-test021: CRT= $(CRT0NS) cprintf.o
-test023: CRT= $(CRT0NS) cprintf.o
-test024: CRT= $(CRT0NS) cprintf.o
-test025: CRT= $(CRT0NS) cprintf.o
-test027: CRT= $(CRT0NS) cprintf.o
-test030: CRT= $(CRT0NS) cprintf.o
-test033: CRT= $(CRT0NS) cprintf.o
-test034: CRT= $(CRT0NS) cprintf.o
+test002: CRT= $(CRT0NS)
+test003: CRT= $(CRT0NS)
+test004: CRT= $(CRT0NS)
+test005: CRT= $(CRT0NS)
+test006: CRT= $(CRT0NS)
+test007: CRT= $(CRT0NS)
+test008: CRT= $(CRT0NS)
+test009: CRT= $(CRT0NS)
+test010: CRT= $(CRT0NS)
+test011: CRT= $(CRT0NS)
+test012: CRT= $(CRT0NS)
+test013: CRT= $(CRT0NS)
+test014: CRT= $(CRT0NS)
+test015: CRT= $(CRT0NS)
+test016: CRT= $(CRT0NS)
+test017: CRT= $(CRT0NS)
+test018: CRT= $(CRT0NS)
+test019: CRT= $(CRT0NS)
+test020: CRT= $(CRT0NS)
+test021: CRT= $(CRT0NS)
+test023: CRT= $(CRT0NS)
+test024: CRT= $(CRT0NS)
+test025: CRT= $(CRT0NS)
+test027: CRT= $(CRT0NS)
+test030: CRT= $(CRT0NS)
+test033: CRT= $(CRT0NS)
+test034: CRT= $(CRT0NS)
 
-# Some tests use stdio and cprintf
-test022: CRT= $(CRT0) cprintf.o
-test026: CRT= $(CRT0) cprintf.o
-test028: CRT= $(CRT0) cprintf.o
-test032: CRT= $(CRT0) cprintf.o
+all: $(TESTS)
 
-all: cprintf.o $(TESTS)
-
-cprintf.o: cprintf.c
-	$(CC) -o $@ $(CFLAGS) $<
-
-%: %.c cprintf.o
+%: %.c
 	$(CC) -o $@.o $(CFLAGS) $<
 	-$(LINKER) -o $@ $(CRT) $@.o $(LINKER_TAIL) -m $@.map
 	-rm $@.o
